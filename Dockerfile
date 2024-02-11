@@ -17,7 +17,7 @@ RUN apt-get update -q && \
 # Install extra dependencies with apt
 RUN apt-get update && \
      apt-get install -y --no-install-recommends \
-     ros-noetic-depthimage-to-laserscan ros-noetic-map-server python3-tf-conversions ros-noetic-global-planner && \
+     ros-noetic-depthimage-to-laserscan ros-noetic-map-server python3-tf-conversions ros-noetic-global-planner vim && \
      rm -rf /var/lib/apt/lists/* && apt-get clean
 
 # Install extra dependencies with pip
@@ -33,4 +33,5 @@ ENV ENV_ROBOT_MODE=sim
 # Add start script
 ADD start.sh /opt/start.sh
 RUN echo "source /opt/ep_ws/devel/setup.bash" >> ~/.bashrc
+RUN chmod +x /opt/start.sh
 CMD /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh /opt/start.sh
