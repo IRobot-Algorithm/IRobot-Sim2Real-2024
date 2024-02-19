@@ -1,0 +1,7 @@
+<launch>
+  <param name="robot_description" command="$(find xacro)/xacro $(find move_base)/urdf/ep_description.xacro" />
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="50.0" />
+  </node>
+</launch>

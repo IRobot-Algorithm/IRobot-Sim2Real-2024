@@ -34,4 +34,6 @@ ENV ENV_ROBOT_MODE=sim
 ADD start.sh /opt/start.sh
 RUN echo "source /opt/ep_ws/devel/setup.bash" >> ~/.bashrc
 RUN chmod +x /opt/start.sh
+
 CMD /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh /opt/start.sh
+# CMD /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh roslaunch rmus_solution navigation.launch

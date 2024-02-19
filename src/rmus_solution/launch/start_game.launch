@@ -1,5 +1,5 @@
 <launch>
-    <include file="$(find rmus_solution)/launch/carto_navigation.launch" />
+    <include file="$(find rmus_solution)/launch/navigation.launch" />
     <!-- <include file="$(find rmus_solution)/launch/iris_navigation.launch" /> -->
 
     <node pkg="tf2_ros" type="static_transform_publisher" name="camera_aligned_depth_to_color_frame_correct"
