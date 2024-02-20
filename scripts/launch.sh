@@ -1,8 +1,8 @@
 #!/bin/bash
-# SERVER_IMAGE=${SERVER_IMAGE:-rmus2022/server:result_pub_fix}
-# CLIENT_IMAGE=${CLIENT_IMAGE:-orange131/test:v1.1} # Just for test, if not effect, please change it to your client docker image. 
-SERVER_IMAGE=${SERVER_IMAGE:-rmus2022/server:v1.0.0}
-CLIENT_IMAGE=${CLIENT_IMAGE:-client-custom:latest}
+SERVER_IMAGE=${SERVER_IMAGE:-rmus2022/server:result_pub_fix}
+CLIENT_IMAGE=${CLIENT_IMAGE:-sim2real/client:v1.5.3} # Just for test, if not effect, please change it to your client docker image. 
+# SERVER_IMAGE=${SERVER_IMAGE:-rmus2022/server:v1.0.0}
+# CLIENT_IMAGE=${CLIENT_IMAGE:-client-custom:latest}
 CLI_EXE=$@
 
 xhost +
@@ -37,3 +37,9 @@ docker run -it --rm --name client --network net-sim \
 	-v /tmp/.X11-unix:/tmp/.X11-unix \
 	--privileged=true -u=root \
 	$CLIENT_IMAGE $CLI_EXE
+
+
+## navigation:
+#	-v ./src/navigation:/opt/ep_ws/src/rmus_solution/navigation \
+## rviz:
+#	--gpus all \
