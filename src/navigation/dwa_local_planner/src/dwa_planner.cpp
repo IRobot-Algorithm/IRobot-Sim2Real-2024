@@ -323,8 +323,8 @@ namespace dwa_local_planner {
     float dis = (goal-pos).head<2>().norm();
     if (dis < 0.2)
     {
-      std::cout << "yaw:" << tf2::getYaw(global_pose.pose.orientation) << std::endl
-                << "goal-pos:" << goal-pos << std::endl;
+      // std::cout << "yaw:" << tf2::getYaw(global_pose.pose.orientation) << std::endl
+      //           << "goal-pos:" << goal-pos << std::endl;
       Eigen::Vector2f v(cos(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(0) +
                         sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(1),
                         - sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(0) +
