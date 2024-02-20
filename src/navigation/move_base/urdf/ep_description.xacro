@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <robot name="ep" xmlns:xacro="http://ros.org/wiki/xacro">
-  <!-- <xacro:include filename="$(find ep_description)/urdf/_d435.urdf.xacro" />
+  <xacro:include filename="$(find ep_description)/urdf/_d435.urdf.xacro" />
   <xacro:sensor_d435 parent="base_link" use_nominal_extrinsics="false">
   <origin xyz="0.15 0.0 0.0125" rpy="0 0 0" />
-  </xacro:sensor_d435> -->
+  </xacro:sensor_d435>
   <link name="base_link"/>
   <link name="laser_link"/>
   <link name="imu_link"/>

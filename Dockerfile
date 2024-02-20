@@ -2,7 +2,7 @@
 FROM tb5zhh/icra-2023-client-base-carto:v2.0.0
 
 # Add source codes into images and install dependencies
-ADD src /opt/ep_ws/src/rmus_solution
+ADD src /opt/ep_ws/src
 WORKDIR /opt/ep_ws
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
 RUN echo "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" > /etc/apt/sources.list.d/realsense.list
@@ -34,6 +34,9 @@ ENV ENV_ROBOT_MODE=sim
 ADD start.sh /opt/start.sh
 RUN echo "source /opt/ep_ws/devel/setup.bash" >> ~/.bashrc
 RUN chmod +x /opt/start.sh
+RUN chmod +x /opt/ep_ws/src/rmus_solution/scripts/*
 
 CMD /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh /opt/start.sh
-# CMD /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh roslaunch rmus_solution navigation.launch
+
+# navigation
+# CMD source /opt/workspace/devel_isolated/setup.bash && catkin_make install --use-ninja -DSETUPTOOLS_DEB_LAYOUT=OFF; /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh /opt/start.sh

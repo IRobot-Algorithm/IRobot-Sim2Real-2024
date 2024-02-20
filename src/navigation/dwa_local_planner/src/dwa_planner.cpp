@@ -228,7 +228,7 @@ namespace dwa_local_planner {
           vel,
           goal,
           &limits,
-          vsamples_ * 3);
+          vsamples_);
     }
     else 
     {
@@ -320,11 +320,32 @@ namespace dwa_local_planner {
     base_local_planner::LocalPlannerLimits limits = planner_util_->getCurrentLimits();
 
     // prepare cost functions and generators for this run
+    float dis = (goal-pos).head<2>().norm();
+    if (dis < 0.2)
+    {
+      std::cout << "yaw:" << tf2::getYaw(global_pose.pose.orientation) << std::endl
+                << "goal-pos:" << goal-pos << std::endl;
+      Eigen::Vector2f v(cos(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(0) +
+                        sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(1),
+                        - sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(0) +
+                        cos(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(1));
+      // Eigen::Vector2f v(sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(0) +
+      //                   cos(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(1),
+      //                   cos(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(0) -
+      //                   sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(1));
+      drive_velocities.pose.position.x = v(0)/v.norm() * dis * 2;
+      drive_velocities.pose.position.y = v(1)/v.norm() * dis * 2;
+      drive_velocities.pose.position.z = 0;
+      base_local_planner::Trajectory traj;
+      traj.cost_ = 1;
+      return traj;
+    }
+
     generator_.initialise(pos,
-        vel,
-        goal,
-        &limits,
-        vsamples_);
+    vel,
+    goal,
+    &limits,
+    vsamples_);
 
     result_traj_.cost_ = -7;
     // find best trajectory by sampling and scoring the samples

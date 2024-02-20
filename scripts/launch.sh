@@ -1,6 +1,6 @@
 #!/bin/bash
 SERVER_IMAGE=${SERVER_IMAGE:-rmus2022/server:result_pub_fix}
-CLIENT_IMAGE=${CLIENT_IMAGE:-sim2real/client:v1.4.1} # Just for test, if not effect, please change it to your client docker image. 
+CLIENT_IMAGE=${CLIENT_IMAGE:-sim2real/client:v1.5.3} # Just for test, if not effect, please change it to your client docker image. 
 # SERVER_IMAGE=${SERVER_IMAGE:-rmus2022/server:v1.0.0}
 # CLIENT_IMAGE=${CLIENT_IMAGE:-client-custom:latest}
 CLI_EXE=$@
@@ -28,7 +28,6 @@ sleep 2
 echo "server is finished"
 
 docker run -it --rm --name client --network net-sim \
-	--gpus all \
 	--cpus=5.6 -m 8192M \
 	-e ROS_MASTER_URI=http://ros-master:11311 \
 	-e DISPLAY=$DISPLAY \
