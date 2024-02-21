@@ -58,6 +58,7 @@
 
 #include <dynamic_reconfigure/server.h>
 #include "move_base/MoveBaseConfig.h"
+#include <nav_msgs/LoadMap.h>
 
 namespace move_base {
   //typedefs to help us out with the action server so that we don't hace to type so much
@@ -150,6 +151,8 @@ namespace move_base {
        */
       void publishZeroVelocity();
 
+      bool resetMap(std::string map_yaml);
+
       /**
        * @brief  Reset the state of the move_base action and send a zero velocity command to the base
        */
@@ -195,6 +198,7 @@ namespace move_base {
       uint32_t planning_retries_;
       double conservative_reset_dist_, clearing_radius_;
       ros::Publisher current_goal_pub_, vel_pub_, action_goal_pub_, recovery_status_pub_;
+      ros::ServiceClient load_map_cli_;
       ros::Subscriber goal_sub_;
       ros::ServiceServer make_plan_srv_, clear_costmaps_srv_;
       bool shutdown_costmaps_, clearing_rotation_allowed_, recovery_behavior_enabled_;
@@ -230,6 +234,8 @@ namespace move_base {
 
       move_base::MoveBaseConfig last_config_;
       move_base::MoveBaseConfig default_config_;
+      std::string clear_map_file_;
+      bool first_reach_;
       bool setup_, p_freq_change_, c_freq_change_;
       bool new_global_plan_;
   };
