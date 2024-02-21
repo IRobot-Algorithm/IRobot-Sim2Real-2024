@@ -12,7 +12,7 @@ import numpy as np
 from threading import Thread
 from scipy.spatial.transform import Rotation as R
 
-from detect import marker_detection, load_template
+from detect import marker_detection
 
 
 def pose_aruco_2_ros(rvec, tvec):
@@ -153,7 +153,7 @@ class Processor:
 
     def update_uint32_data(self, blockid):
         last_info = self.uint32data[blockid - 1]
-        if blockid <= 5 and blockid >= 1:
+        if blockid <= 6 and blockid >= 1:
             (
                 id_list,
                 quads_list,
@@ -170,7 +170,7 @@ class Processor:
                 verbose=self.verbose,
                 height_range=(0.0, 0.06),
             )
-        elif blockid <= 8 and blockid >= 6:
+        elif blockid <= 9 and blockid >= 7:
             (
                 id_list,
                 quads_list,
@@ -182,7 +182,7 @@ class Processor:
             ) = marker_detection(
                 self.image,
                 camera_matrix=self.camera_matrix,
-                template_ids=[6, 7, 8],
+                template_ids=[7, 8, 9],
                 area_filter_size=1200,
                 verbose=self.verbose,
                 height_range=(0.00, 0.06),
@@ -433,7 +433,6 @@ class Processor:
 
 if __name__ == "__main__":
     rospy.init_node("image_node", anonymous=True)
-    load_template()
     rter = Processor(initial_mode=5, verbose=False)
     rospy.loginfo("Image thread started")
     rospy.spin()

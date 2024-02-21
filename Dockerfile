@@ -22,6 +22,7 @@ RUN apt-get update && \
 
 # Install extra dependencies with pip
 RUN pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple scipy
+RUN pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple onnxruntime
 
 # Patch for keyboard
 ADD ep_teleop /opt/ep_ws/src/ep_teleop
