@@ -143,6 +143,13 @@ namespace move_base {
       exit(1);
     }
 
+    //reset map
+    private_nh.param("clear_map_file", clear_map_file_, 
+                      std::string("/opt/ep_ws/src/navigation/move_base/maps/cartographer/clear_map.yaml"));
+    // std::cout << "********" << clear_map_file_ << std::endl;
+    load_map_cli_ = private_nh.serviceClient<nav_msgs::LoadMap>("/change_map");
+    first_reach_ = true;
+
     // Start actively updating costmaps based on sensor data
     planner_costmap_ros_->start();
     controller_costmap_ros_->start();
@@ -508,6 +515,33 @@ namespace move_base {
     cmd_vel.angular.z = 0.0;
     vel_pub_.publish(cmd_vel);
   }
+
+  bool MoveBase::resetMap(std::string map_yaml)
+  {
+    nav_msgs::LoadMap::Request request;
+    request.map_url = map_yaml.c_str();
+    nav_msgs::LoadMap::Response response;
+
+    if (load_map_cli_.call(request, response))
+    {
+      if (response.result == response.RESULT_SUCCESS)
+      {
+        ROS_INFO("Map change successful");
+        return true;
+      }
+      else
+      {
+        ROS_ERROR("Map change failed with result code: %d", response.result);
+        return false;
+      }
+    }
+    else
+    {
+      ROS_ERROR("Failed to call service change_map");
+      return false;
+    }
+  }
+
 
   bool MoveBase::isQuaternionValid(const geometry_msgs::Quaternion& q){
     //first we need to check if the quaternion has nan's or infs
@@ -893,6 +927,11 @@ namespace move_base {
           runPlanner_ = false;
           lock.unlock();
 
+          if (first_reach_)
+          {
+            if (resetMap(clear_map_file_))
+              first_reach_ = false;
+          }
           as_->setSucceeded(move_base_msgs::MoveBaseResult(), "Goal reached.");
           return true;
         }
@@ -1206,3 +1245,4 @@ namespace move_base {
     return true;
   }
 };
+

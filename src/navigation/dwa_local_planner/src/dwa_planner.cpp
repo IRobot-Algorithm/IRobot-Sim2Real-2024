@@ -329,10 +329,10 @@ namespace dwa_local_planner {
                         sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(1),
                         - sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(0) +
                         cos(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(1));
-      // Eigen::Vector2f v(sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(0) +
-      //                   cos(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(1),
-      //                   cos(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(0) -
-      //                   sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(1));
+      // Eigen::Vector2f v(cos(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(0) -
+      //                   sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(1),
+      //                   sin(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(0) +
+      //                   cos(tf2::getYaw(global_pose.pose.orientation)) * (goal-pos)(1));
       drive_velocities.pose.position.x = v(0)/v.norm() * dis * 2;
       drive_velocities.pose.position.y = v(1)/v.norm() * dis * 2;
       drive_velocities.pose.position.z = 0;
