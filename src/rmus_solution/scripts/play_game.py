@@ -42,7 +42,7 @@ if __name__ == '__main__':
     rospy.sleep(2)
 
     trim_res = trimer(0, "")
-    response = img_switch_mode(9)
+    response = img_switch_mode(10)
     navigation_result = navigation(9, "")
 
     gameinfo = rospy.wait_for_message("/get_gameinfo", UInt8MultiArray, timeout=7)
