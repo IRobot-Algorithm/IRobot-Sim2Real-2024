@@ -116,7 +116,7 @@ class manipulater:
             flag = 0
             y_threshold_p = 0.018
             y_threshold_n = 0.018
-            x_dis_tar = 0.385
+            x_dis_tar = 0.335
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
                 if target_marker_pose is None:
@@ -206,7 +206,7 @@ class manipulater:
             flag = 0
             y_threshold_p = 0.018
             y_threshold_n = 0.018
-            x_dis_tar = 0.385
+            x_dis_tar = 0.335
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
