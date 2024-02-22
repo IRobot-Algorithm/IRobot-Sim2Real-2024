@@ -12,7 +12,7 @@ import numpy as np
 from threading import Thread
 from scipy.spatial.transform import Rotation as R
 
-from detect import marker_detection, load_template
+from detect import marker_detection
 
 
 def pose_aruco_2_ros(rvec, tvec):
@@ -78,7 +78,7 @@ class Processor:
         self.pub_p = rospy.Publisher("/get_gameinfo", UInt8MultiArray, queue_size=1)
         self.pub_b = rospy.Publisher("/get_blockinfo", Pose, queue_size=1)
         self.detected_gameinfo = [-1, -1, -1]
-        self.uint32data = [None] * 8
+        self.uint32data = [None] * 9
 
     def imageCallback(self, image):
         self.image = self.bridge.imgmsg_to_cv2(image, "bgr8")
@@ -86,7 +86,7 @@ class Processor:
             1000 * (image.header.stamp.secs - self.start_time)
         )
         locked_current_mode = self.current_mode
-        if locked_current_mode == 9:
+        if locked_current_mode == 10:
             detected_gameinfo = self.get_gameinfo(self.image)
             if detected_gameinfo is None:
                 pass
@@ -103,7 +103,7 @@ class Processor:
                     rospy.loginfo(detected_gameinfo)
                 self.detected_gameinfo = detected_gameinfo
             self.current_visualization_image = self.image
-        elif locked_current_mode <= 8 and locked_current_mode >= 1:
+        elif locked_current_mode <= 9 and locked_current_mode >= 1:
             self.update_uint32_data(locked_current_mode)
             if self.uint32data[locked_current_mode - 1] is None:
                 pass
@@ -118,7 +118,7 @@ class Processor:
         self.depth_img = self.bridge.imgmsg_to_cv2(image, "32FC1")
 
     def modeCallBack(self, req):
-        if 0 <= req.mode <= 9:
+        if 0 <= req.mode <= 10:
             self.current_mode = req.mode
             return switchResponse(self.current_mode)
         else:
@@ -131,7 +131,7 @@ class Processor:
         )
         number_dict = {}
         for id, quads in zip(id_list, quads_list):
-            if id <= 5 and id >= 1:
+            if id <= 6 and id >= 1:
                 number_dict[id] = (
                     quads[0][0][0] + quads[1][0][0] + quads[2][0][0] + quads[3][0][0]
                 ) / 4.0
@@ -153,7 +153,7 @@ class Processor:
 
     def update_uint32_data(self, blockid):
         last_info = self.uint32data[blockid - 1]
-        if blockid <= 5 and blockid >= 1:
+        if blockid <= 6 and blockid >= 1:
             (
                 id_list,
                 quads_list,
@@ -170,7 +170,7 @@ class Processor:
                 verbose=self.verbose,
                 height_range=(0.0, 0.06),
             )
-        elif blockid <= 8 and blockid >= 6:
+        elif blockid <= 9 and blockid >= 7:
             (
                 id_list,
                 quads_list,
@@ -182,7 +182,7 @@ class Processor:
             ) = marker_detection(
                 self.image,
                 camera_matrix=self.camera_matrix,
-                template_ids=[6, 7, 8],
+                template_ids=[7, 8, 9],
                 area_filter_size=1200,
                 verbose=self.verbose,
                 height_range=(0.00, 0.06),
@@ -259,7 +259,7 @@ class Processor:
             self.uint32data[blockid - 1][10] = depth
             return
         elif len(good_list) > 0:
-            if blockid <= 5 and blockid >= 1 and blockid != 4:
+            if blockid <= 6 and blockid >= 1 and blockid != 4:
                 max_area = np.max(np.array(area_list)[np.array(good_list)]) * 0.80
                 goodarea_tid = [id for id in good_list if area_list[id] > max_area]
                 best_id = -22223
@@ -324,7 +324,7 @@ class Processor:
                 else:
                     rospy.logerr("length is !" + str(len(goodarea_tid2)))
                     best_id = goodarea_tid2[0]
-            elif blockid <= 8 and blockid >= 6:
+            elif blockid <= 9 and blockid >= 7:
                 best_id = -22223
                 min_point = 9898989
                 for id in good_list:
@@ -433,7 +433,6 @@ class Processor:
 
 if __name__ == "__main__":
     rospy.init_node("image_node", anonymous=True)
-    load_template()
     rter = Processor(initial_mode=5, verbose=False)
     rospy.loginfo("Image thread started")
     rospy.spin()
