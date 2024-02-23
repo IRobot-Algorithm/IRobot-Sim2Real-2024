@@ -11,6 +11,7 @@ import numpy as np
 onnx_model_path = os.path.join(os.path.dirname(__file__), "model/CNN_s.onnx")
 # 创建ONNX Runtime会话
 session = onnxruntime.InferenceSession(onnx_model_path)
+
 def sort_contour(cnt):
 
     if not len(cnt) == 4:
@@ -88,8 +89,7 @@ def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_
     global session
     input_name = session.get_inputs()[0].name
     quads_ID = []
-    minpoints_list = []
-    wrapped_img_list = []
+    minareas_list = []
 
     projection_points = True
     quads = []
@@ -183,6 +183,7 @@ def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_
             dst_quads.append(quads[i])
             quads_ID.append(max_index)
             quads_f.append(quads[i].astype(float))
+            minareas_list.append(cv2.contourArea(quads[i]))
 
     if projection_points:
         rvec_list = []
@@ -242,7 +243,7 @@ def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_
             rvec_list.append(rvec)
             tvec_list.append(tvec)
             area_list.append(area)
-        return quads_prj, tvec_list, rvec_list, area_list, quads, quads_ID
+        return quads_prj, tvec_list, rvec_list, area_list, quads, quads_ID, minareas_list
     else:
         return (
             dst_quads,
@@ -250,7 +251,8 @@ def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_
             [[0, 0, 0] for _ in dst_quads],
             [cv2.contourArea(quad.astype(np.int)) for quad in dst_quads],
             dst_quads,
-            quads_ID
+            quads_ID,
+            minareas_list
         )
 
 
@@ -343,14 +345,14 @@ def marker_detection(
     exchange_station=False,
 ):
     wrapped_img_list = []
-    minpoints_list = []
+    minareas_list = [] # 面积列表
     if exchange_station:
         tframe = copy.deepcopy(frame)
         tframe[int(tframe.shape[0] * 0.32) :, :, :] = 0
         boolImg, _ = preprocessing_exchange(tframe)
     else:
         boolImg, _ = preprocessing(frame)
-    quads, tvec_list, rvec_list, area_list, ori_quads, quads_ID = square_detection(
+    quads, tvec_list, rvec_list, area_list, ori_quads, quads_ID, minareas_list = square_detection(
         frame, boolImg, camera_matrix, area_filter_size=area_filter_size, height_range=height_range, template_ids=template_ids
     )
     # quads_ID, minpoints_list, wrapped_img_list = classification(
@@ -381,5 +383,5 @@ def marker_detection(
         [tvec_list[_] for _ in ids],
         [rvec_list[_] for _ in ids],
         wrapped_img_list,
-        minpoints_list,
+        minareas_list,
     )

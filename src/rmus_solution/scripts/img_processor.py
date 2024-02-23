@@ -178,7 +178,7 @@ class Processor:
                 tvec_list,
                 rvec_list,
                 _,
-                minpoints_list,
+                minareas_list,
             ) = marker_detection(
                 self.image,
                 camera_matrix=self.camera_matrix,
@@ -326,13 +326,13 @@ class Processor:
                     best_id = goodarea_tid2[0]
             elif blockid <= 9 and blockid >= 7:
                 best_id = -22223
-                min_point = 9898989
+                best_max_area = 0
                 for id in good_list:
                     if id_list[id] != blockid:
                         continue
-                    if minpoints_list[id] < min_point:
+                    if minareas_list[id] > best_max_area:
                         best_id = id
-                        min_point = minpoints_list[id]
+                        best_max_area = minareas_list[id]
             else:
                 assert False
         try:
@@ -433,6 +433,6 @@ class Processor:
 
 if __name__ == "__main__":
     rospy.init_node("image_node", anonymous=True)
-    rter = Processor(initial_mode=5, verbose=False)
+    rter = Processor(initial_mode=5, verbose=True)
     rospy.loginfo("Image thread started")
     rospy.spin()
