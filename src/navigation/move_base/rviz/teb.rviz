@@ -6,11 +6,7 @@ Panels:
       Expanded:
         - /TF1/Frames1
         - /TF1/Tree1
-        - /Planner Plan1
-        - /Global Map1/Costmap1
         - /Global Map1/Planner1
-        - /Local Map1/Polygon1
-        - /Local Map1/Costmap1
         - /Local Map1/Planner1
       Splitter Ratio: 0.5
     Tree Height: 1494
@@ -121,7 +117,7 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        All Enabled: false
+        All Enabled: true
         arm_link:
           Value: true
         base_link:
@@ -228,16 +224,6 @@ Visualization Manager:
       Value: true
     - Class: rviz/Group
       Displays:
-        - Alpha: 0.699999988079071
-          Class: rviz/Map
-          Color Scheme: costmap
-          Draw Behind: true
-          Enabled: true
-          Name: Costmap
-          Topic: /move_base/global_costmap/costmap
-          Unreliable: false
-          Use Timestamp: false
-          Value: true
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
@@ -266,25 +252,6 @@ Visualization Manager:
       Name: Global Map
     - Class: rviz/Group
       Displays:
-        - Alpha: 1
-          Class: rviz/Polygon
-          Color: 0; 0; 0
-          Enabled: true
-          Name: Polygon
-          Queue Size: 10
-          Topic: /move_base/local_costmap/footprint
-          Unreliable: false
-          Value: true
-        - Alpha: 0.699999988079071
-          Class: rviz/Map
-          Color Scheme: costmap
-          Draw Behind: false
-          Enabled: true
-          Name: Costmap
-          Topic: /move_base/local_costmap/costmap
-          Unreliable: false
-          Use Timestamp: false
-          Value: true
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
