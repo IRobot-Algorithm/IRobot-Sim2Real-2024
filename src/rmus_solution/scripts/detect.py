@@ -88,6 +88,7 @@ def preprocessing(frame):
 def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_range=(-10000.0, 200000.0), template_ids=range(1, 9)):
     global session
     input_name = session.get_inputs()[0].name
+    all_ID = []
     quads_ID = []
     minareas_list = []
 
@@ -184,6 +185,8 @@ def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_
             quads_ID.append(max_index)
             quads_f.append(quads[i].astype(float))
             minareas_list.append(cv2.contourArea(quads[i]))
+        if max_index != 0:
+            all_ID.append(max_index)
 
     if projection_points:
         rvec_list = []
@@ -243,14 +246,14 @@ def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_
             rvec_list.append(rvec)
             tvec_list.append(tvec)
             area_list.append(area)
-        return quads_prj, tvec_list, rvec_list, area_list, quads, quads_ID, minareas_list
+        return quads_prj, tvec_list, rvec_list, area_list, all_ID, quads_ID, minareas_list
     else:
         return (
             dst_quads,
             [[0, 0, 0] for _ in dst_quads],
             [[0, 0, 0] for _ in dst_quads],
             [cv2.contourArea(quad.astype(np.int)) for quad in dst_quads],
-            dst_quads,
+            all_ID,
             quads_ID,
             minareas_list
         )
@@ -344,7 +347,7 @@ def marker_detection(
     height_range=(-10000.0, 200000.0),
     exchange_station=False,
 ):
-    wrapped_img_list = []
+    all_ID = [] # 检测到的所有ID
     minareas_list = [] # 面积列表
     if exchange_station:
         tframe = copy.deepcopy(frame)
@@ -352,7 +355,7 @@ def marker_detection(
         boolImg, _ = preprocessing_exchange(tframe)
     else:
         boolImg, _ = preprocessing(frame)
-    quads, tvec_list, rvec_list, area_list, ori_quads, quads_ID, minareas_list = square_detection(
+    quads, tvec_list, rvec_list, area_list, all_ID, quads_ID, minareas_list = square_detection(
         frame, boolImg, camera_matrix, area_filter_size=area_filter_size, height_range=height_range, template_ids=template_ids
     )
     # quads_ID, minpoints_list, wrapped_img_list = classification(
@@ -375,13 +378,13 @@ def marker_detection(
             except:
                 traceback.print_exc()
         cv2.drawContours(frame, quads, -1, (0, 255, 0), 1)
-    ids = [i for i in range(len(quads_ID)) if quads_ID[i] >= 1 and quads_ID[i] <= 8]
+    ids = [i for i in range(len(quads_ID)) if quads_ID[i] >= 1 and quads_ID[i] <= 9]
     return (
         [quads_ID[_] for _ in ids],
         [quads[_] for _ in ids],
         [area_list[_] for _ in ids],
         [tvec_list[_] for _ in ids],
         [rvec_list[_] for _ in ids],
-        wrapped_img_list,
+        all_ID,
         minareas_list,
     )

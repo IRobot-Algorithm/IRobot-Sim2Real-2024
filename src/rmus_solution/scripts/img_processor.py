@@ -37,6 +37,7 @@ class Processor:
         self.start_time = int(rospy.get_time() - 3)
         self.bridge = CvBridge()
         self.current_visualization_image = None
+        self.all_detectd_ID = []
         while not rospy.is_shutdown():
             try:
                 rospy.wait_for_message("/camera/color/image_raw", Image, timeout=5.0)
@@ -77,6 +78,7 @@ class Processor:
         rospy.Service("/image_processor_switch_mode", switch, self.modeCallBack)
         self.pub_p = rospy.Publisher("/get_gameinfo", UInt8MultiArray, queue_size=1)
         self.pub_b = rospy.Publisher("/get_blockinfo", Pose, queue_size=1)
+        self.pub_all_ID = rospy.Publisher("/all_detect_ID", UInt8MultiArray, queue_size=1)
         self.detected_gameinfo = [-1, -1, -1]
         self.uint32data = [None] * 9
 
@@ -86,7 +88,8 @@ class Processor:
             1000 * (image.header.stamp.secs - self.start_time)
         )
         locked_current_mode = self.current_mode
-        if locked_current_mode == 10:
+        print("detect mode recieved:", locked_current_mode)
+        if locked_current_mode == 10: # 获得兑换站上方3位目标数字
             detected_gameinfo = self.get_gameinfo(self.image)
             if detected_gameinfo is None:
                 pass
@@ -104,11 +107,14 @@ class Processor:
                 self.detected_gameinfo = detected_gameinfo
             self.current_visualization_image = self.image
         elif locked_current_mode <= 9 and locked_current_mode >= 1:
+            t_begin = rospy.Time.now().to_nsec()
             self.update_uint32_data(locked_current_mode)
             if self.uint32data[locked_current_mode - 1] is None:
                 pass
             else:
                 self.pub_b.publish(self.latest_pose)
+            self.pub_all_ID.publish(UInt8MultiArray(data=self.all_detectd_ID))
+            print("publish pose once used: ", int((rospy.Time.now().to_nsec() - t_begin)/1e6), "ms")
         elif locked_current_mode == 0:
             self.current_visualization_image = self.image
         else:
@@ -152,6 +158,7 @@ class Processor:
             return None
 
     def update_uint32_data(self, blockid):
+        all_ID = []
         last_info = self.uint32data[blockid - 1]
         if blockid <= 6 and blockid >= 1:
             (
@@ -160,7 +167,7 @@ class Processor:
                 area_list,
                 tvec_list,
                 rvec_list,
-                _,
+                all_ID,
                 _,
             ) = marker_detection(
                 self.image,
@@ -177,7 +184,7 @@ class Processor:
                 area_list,
                 tvec_list,
                 rvec_list,
-                _,
+                all_ID,
                 minareas_list,
             ) = marker_detection(
                 self.image,
@@ -382,8 +389,9 @@ class Processor:
                 (255, 255, 255),
                 1,
             )
-        self.latest_pose = pose_list[best_id]
+        self.latest_pose = pose_list[best_id] # 发送的pose
         self.uint32data[blockid - 1] = blockinfo
+        self.all_detectd_ID = list(set(all_ID))
         return
 
     def get_current_depth(self, quads):
@@ -433,6 +441,6 @@ class Processor:
 
 if __name__ == "__main__":
     rospy.init_node("image_node", anonymous=True)
-    rter = Processor(initial_mode=5, verbose=True)
+    rter = Processor(initial_mode=5, verbose=False)
     rospy.loginfo("Image thread started")
     rospy.spin()
