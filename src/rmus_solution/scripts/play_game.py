@@ -122,7 +122,7 @@ if __name__ == '__main__':
         print("         到达目的地"+str(6+i))
 
 
-        response = img_switch_mode(6+i)
+        response = img_switch_mode(7+i)
         rospy.sleep(5)
         trimer_response = trimer(2,"")
         response = img_switch_mode(0)
