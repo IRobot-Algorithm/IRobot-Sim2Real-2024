@@ -40,25 +40,23 @@ def grip(gameinfo , is_here, response):
         if check_topic_messages("/get_blockinfo") and is_here == [0]:#判断是否识别到了目标方块
             is_here = [1]#有目标方块
             print("这里有目标方块"+ str(target))
-            rospy.sleep(0.5)#应该是留给微调的时间,之后可以改为接收到消息再进行下一步
             trimer_response = trimer(1,"")
             try:
-                rospy.sleep(0.5)
-                blockinfo = rospy.wait_for_message("/get_blockinfo", Pose, timeout=1)
-                rospy.sleep(0.5)
-                blockinfo2 = rospy.wait_for_message("/get_blockinfo", Pose, timeout=1)
-
-                if compare_poses(blockinfo, blockinfo2) == True:
-                    rospy.logerr("抓取失败")
-                    rospy.sleep(3.0)
-                    trimer_response = trimer(1,"")
-                    while trimer_response.res == False:#这边是原来就有判断夹取是否成功么？
+                blockinfo = rospy.wait_for_message("/all_detect_ID", UInt8MultiArray, timeout=1)
+                if target in blockinfo.data :
+                    times = 0#尝试重新抓取的次数
+                    while target in blockinfo.data and times<3:#若抓不上会尝试抓三次
+                        times = times + 1
+                        rospy.logerr("抓取失败,将进行下一次尝试")
                         trimer_response = trimer(1,"")
-                    rospy.logerr("另一次抓取成功了！！")
+                        blockinfo = rospy.wait_for_message("/all_detect_ID", UInt8MultiArray, timeout=1)
+
+                    if target in blockinfo.data == False:
+                        rospy.logeinfo("另一次抓取成功了！！")
                 else:
-                    rospy.logerr("抓取成功")
+                    rospy.loginfo("抓取成功")
             except:
-                rospy.logerr("未接收到方块的位姿信息")
+                rospy.loginfo("抓取成功")
         
     return is_here,response
 
@@ -123,7 +121,7 @@ if __name__ == '__main__':
 
 
         response = img_switch_mode(7+i)
-        rospy.sleep(5)
+        rospy.sleep(0.5)
         trimer_response = trimer(2,"")
         response = img_switch_mode(0)
 
