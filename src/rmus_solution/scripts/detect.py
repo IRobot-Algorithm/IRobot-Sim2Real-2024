@@ -87,7 +87,7 @@ def preprocessing(frame):
 
 def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_range=(-10000.0, 200000.0), template_ids=range(1, 9)):
     global session
-    input_name = session.get_inputs()[0].name
+    input_name = 'input'
     all_ID = []
     quads_ID = []
     minareas_list = []
@@ -165,6 +165,7 @@ def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_
         )
         out_img = cv2.cvtColor(out_img, cv2.COLOR_BGR2GRAY)
         out_img = cv2.threshold(out_img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+<<<<<<< HEAD
         # black = 0
         # white = 0
         # for i1 in range(50):
@@ -176,6 +177,9 @@ def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_
         # rate1 = white / (50 * 50)
         # if rate1 > 0.8 or rate1 < 0.2:
         #     continue
+=======
+
+>>>>>>> b7bfd294bcc1818ba392b0c3f14488cfefe47597
         input_data = out_img.reshape((1, 1, out_img.shape[0], out_img.shape[1])).astype(np.float32)
         output = session.run(None, {input_name: input_data})
         predictions = output[0]
@@ -259,84 +263,6 @@ def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_
         )
 
 
-# def classification(frame, quads, template_ids=range(1, 9)):
-#     quads_ID = []
-#     minpoints_list = []
-#     wrapped_img_list = []
-#     for i in range(len(quads)):
-#         points_src = np.array(
-#             [
-#                 [(quads[i][0, 0, 0], quads[i][0, 0, 1])],
-#                 [(quads[i][1, 0, 0], quads[i][1, 0, 1])],
-#                 [(quads[i][2, 0, 0], quads[i][2, 0, 1])],
-#                 [(quads[i][3, 0, 0], quads[i][3, 0, 1])],
-#             ],
-#             dtype="float32",
-#         )
-#
-#         points_dst = np.array([[0, 0], [49, 0], [49, 49], [0, 49]], dtype="float32")
-#         out_img = cv2.warpPerspective(
-#             frame, cv2.getPerspectiveTransform(points_src, points_dst), (50, 50)
-#         )
-#         out_img = cv2.cvtColor(out_img, cv2.COLOR_BGR2GRAY)
-#         out_img = cv2.threshold(out_img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-#         wrapped_img_list.append(out_img)
-#
-#         resize = False
-#         if resize:
-#             try:
-#                 out_img[:3, :] = 0
-#                 out_img[47:, :] = 0
-#                 out_img[:, :3] = 0
-#                 out_img[:, 47:] = 0
-#                 num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(
-#                     out_img
-#                 )
-#                 for label_i in range(1, num_labels):
-#                     if stats[label_i, cv2.CC_STAT_AREA].astype(float) < 35:  # 原50
-#                         out_img[labels == label_i] = 0
-#
-#                 nonzero_img = np.nonzero(out_img)
-#                 left, right = np.min(nonzero_img[0]), np.max(nonzero_img[0])
-#                 top, bottom = np.min(nonzero_img[1]), np.max(nonzero_img[1])
-#                 right, bottom = min(right + 1, 49), min(bottom + 1, 49)
-#                 nonzero_img = out_img[left:right, top:bottom]
-#                 nonzero_img = cv2.resize(
-#                     nonzero_img, (36, 36), interpolation=cv2.INTER_NEAREST
-#                 )
-#                 out_img = np.zeros((50, 50), dtype=np.uint8)
-#                 out_img[7 : 7 + 36, 7 : 7 + 36] = nonzero_img
-#             except:
-#                 rospy.loginfo("resize trick failed, back to original img as tempate")
-#         out_img = map_img77(out_img)
-#
-#         match_candidate = []
-#         match_candidate.append(out_img)
-#         match_candidate.append(cv2.rotate(out_img, cv2.ROTATE_180))
-#         match_candidate.append(cv2.rotate(out_img, cv2.ROTATE_90_CLOCKWISE))
-#         match_candidate.append(cv2.rotate(out_img, cv2.ROTATE_90_COUNTERCLOCKWISE))
-#
-#         min_diff = 10000
-#         min_diff_target = 0
-#
-#         for tid in template_ids:
-#             for tt in range(4):
-#                 diff_img = cv2.absdiff(templates[tid - 1], match_candidate[tt])
-#                 sum = np.sum(diff_img) / 255.0 / diff_img.size
-#                 if min_diff > sum:
-#                     min_diff = sum
-#                     min_diff_target = tid
-#
-#         if min_diff < 0.2:
-#             quads_ID.append(min_diff_target)
-#             minpoints_list.append(min_diff)
-#         else:
-#             quads_ID.append(-1)
-#             minpoints_list.append(min_diff)
-#
-#     return quads_ID, minpoints_list, wrapped_img_list
-
-
 def marker_detection(
     frame,
     camera_matrix,
@@ -358,9 +284,7 @@ def marker_detection(
     quads, tvec_list, rvec_list, area_list, all_ID, quads_ID, minareas_list = square_detection(
         frame, boolImg, camera_matrix, area_filter_size=area_filter_size, height_range=height_range, template_ids=template_ids
     )
-    # quads_ID, minpoints_list, wrapped_img_list = classification(
-    #     frame, quads, template_ids=template_ids
-    # )
+
     if verbose:
         id = {1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "B", 8: "O", 9: "X", 0: "*"}
         for i in range(len(quads)):

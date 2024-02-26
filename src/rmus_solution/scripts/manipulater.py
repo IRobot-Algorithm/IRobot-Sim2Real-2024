@@ -5,9 +5,12 @@ import threading
 import numpy as np
 from scipy.spatial.transform import Rotation as sciR
 
+
+
 import rospy
 from geometry_msgs.msg import Twist, Pose, Point
 from rmus_solution.srv import graspsignal, graspsignalResponse
+from std_msgs.msg import Bool
 
 import tf2_ros
 import tf2_geometry_msgs
@@ -17,8 +20,14 @@ class manipulater:
     def __init__(self) -> None:
         self.arm_gripper_pub = rospy.Publisher("arm_gripper", Point, queue_size=2)
         self.arm_position_pub = rospy.Publisher("arm_position", Pose, queue_size=2)
+
+        self.timeout_pub = rospy.Publisher("/timeout", Bool, queue_size=2)#发布微调是否超时
+        
+
         self.cmd_vel_puber = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
         rospy.Subscriber("/get_blockinfo", Pose, self.markerPoseCb, queue_size=1)
+
+
 
         self.current_marker_poses = None
         self.image_time_now = 0
@@ -104,6 +113,7 @@ class manipulater:
         rate = rospy.Rate(self.ros_rate)
 
         resp = graspsignalResponse()
+        current_time1 = rospy.Time.now()
 
         if req.mode == 1:
             rospy.loginfo("First trim then grasp")
@@ -162,7 +172,7 @@ class manipulater:
                     cmd_vel[1] = -0.11
 
                 flag = 1
-
+                
                 cmd_vel[2] = 0
                 if np.abs(target_pos[0] - x_dis_tar) <= 0.02 and (
                     (target_pos[1] - 0.0) <= y_threshold_p
@@ -170,6 +180,13 @@ class manipulater:
                 ):
                     cmd_vel = [0.0, 0.0, 0.0]
                 self.sendBaseVel(cmd_vel)
+                current_time2 = rospy.Time.now()
+                if current_time2.secs - current_time1.secs > 20:#如果微调时间超过20秒
+                    rospy.logerr("微调时间过长")
+                    self.timeout_pub.publish(True)
+                    rospy.sleep(2)
+                    return resp
+                self.timeout_pub.publish(False)
                 if np.abs(target_pos[0] - x_dis_tar) <= 0.02 and (
                     (target_pos[1] - 0.0) <= y_threshold_p
                     and (0.0 - target_pos[1]) <= y_threshold_n
@@ -217,7 +234,7 @@ class manipulater:
                 target_marker_pose = self.current_marker_poses
                 if target_marker_pose is None:
                     continue
-
+                
                 target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
                     target_marker_pose
                 )
@@ -265,7 +282,10 @@ class manipulater:
                     break
                 rate.sleep()
 
+            
             rospy.loginfo("Trim well in the horizon dimention")
+
+            
 
             target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
                 self.current_marker_poses
@@ -283,7 +303,7 @@ class manipulater:
 
             resp.res = True
             resp.response = "Successfully Place"
-
+            
         return resp
 
     def open_gripper(self):

@@ -81,7 +81,7 @@ class Processor:
         self.pub_all_ID = rospy.Publisher("/all_detect_ID", UInt8MultiArray, queue_size=1)
         self.detected_gameinfo = [-1, -1, -1]
         self.uint32data = [None] * 9
-
+        
     def imageCallback(self, image):
         self.image = self.bridge.imgmsg_to_cv2(image, "bgr8")
         self.this_image_time_ms = int(image.header.stamp.nsecs / 1e6) + int(
