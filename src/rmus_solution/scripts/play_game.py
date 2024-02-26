@@ -45,7 +45,7 @@ def grip(gameinfo , is_here, response):
                 blockinfo = rospy.wait_for_message("/all_detect_ID", UInt8MultiArray, timeout=1)
                 if target in blockinfo.data :
                     times = 0#尝试重新抓取的次数
-                    while target in blockinfo.data and times<20:#若抓不上会尝试抓20次
+                    while target in blockinfo.data and times<1:#若抓不上会尝试抓20次
                         times = times + 1
                         rospy.logerr("抓取失败,将进行下一次尝试")
                         

@@ -17,9 +17,10 @@ RUN apt-get update -q && \
 # Install extra dependencies with apt
 RUN apt-get update && \
      apt-get install -y --no-install-recommends \
-     ros-noetic-depthimage-to-laserscan ros-noetic-map-server python3-tf-conversions ros-noetic-global-planner vim && \
+     ros-noetic-depthimage-to-laserscan ros-noetic-map-server python3-tf-conversions ros-noetic-global-planner vim \
+     ros-noetic-rqt ros-noetic-rqt-common-plugins && \
      rm -rf /var/lib/apt/lists/* && apt-get clean
-
+ 
 # Install extra dependencies with pip
 RUN pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple scipy
 RUN pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple onnxruntime
