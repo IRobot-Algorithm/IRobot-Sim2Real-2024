@@ -107,6 +107,7 @@ class Processor:
                 self.detected_gameinfo = detected_gameinfo
             self.current_visualization_image = self.image
         elif locked_current_mode <= 9 and locked_current_mode >= 1:
+            self.all_detectd_ID = []
             t_begin = rospy.Time.now().to_nsec()
             self.update_uint32_data(locked_current_mode)
             if self.uint32data[locked_current_mode - 1] is None:
@@ -116,7 +117,7 @@ class Processor:
                 # self.latest_pose.position = None
                 # self.latest_pose.orientation = None
             self.pub_all_ID.publish(UInt8MultiArray(data=self.all_detectd_ID))
-            #print("publish pose once used: ", int((rospy.Time.now().to_nsec() - t_begin)/1e6), "ms")
+            print("publish pose once used: ", int((rospy.Time.now().to_nsec() - t_begin)/1e6), "ms")
         elif locked_current_mode == 0:
             self.current_visualization_image = self.image
         else:
@@ -443,6 +444,6 @@ class Processor:
 
 if __name__ == "__main__":
     rospy.init_node("image_node", anonymous=True)
-    rter = Processor(initial_mode=5, verbose=False)
+    rter = Processor(initial_mode=0, verbose=False)
     rospy.loginfo("Image thread started")
     rospy.spin()
