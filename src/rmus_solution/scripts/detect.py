@@ -165,21 +165,6 @@ def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_
         )
         out_img = cv2.cvtColor(out_img, cv2.COLOR_BGR2GRAY)
         out_img = cv2.threshold(out_img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-<<<<<<< HEAD
-        # black = 0
-        # white = 0
-        # for i1 in range(50):
-        #     for j1 in range(50):
-        #         if out_img[i1, j1] == 0:
-        #             black += 1
-        #         else:
-        #             white += 1
-        # rate1 = white / (50 * 50)
-        # if rate1 > 0.8 or rate1 < 0.2:
-        #     continue
-=======
-
->>>>>>> b7bfd294bcc1818ba392b0c3f14488cfefe47597
         input_data = out_img.reshape((1, 1, out_img.shape[0], out_img.shape[1])).astype(np.float32)
         output = session.run(None, {input_name: input_data})
         predictions = output[0]

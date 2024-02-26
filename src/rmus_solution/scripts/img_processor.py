@@ -107,6 +107,7 @@ class Processor:
                 self.detected_gameinfo = detected_gameinfo
             self.current_visualization_image = self.image
         elif locked_current_mode <= 9 and locked_current_mode >= 1:
+            self.all_detectd_ID = []
             t_begin = rospy.Time.now().to_nsec()
             self.update_uint32_data(locked_current_mode)
             if self.uint32data[locked_current_mode - 1] is None:
