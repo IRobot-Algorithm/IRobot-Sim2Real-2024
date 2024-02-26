@@ -31,7 +31,7 @@ def check_topic_messages(topic_name):
         rospy.wait_for_message(topic_name, Pose, timeout=1)
     except rospy.exceptions.ROSException:
         return False
-    return True;
+    return True
 
 
 def grip(gameinfo , is_here, response):

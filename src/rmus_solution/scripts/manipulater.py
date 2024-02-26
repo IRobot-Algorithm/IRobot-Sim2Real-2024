@@ -126,21 +126,26 @@ class manipulater:
                     target_marker_pose
                 )
                 cmd_vel = [0.0, 0.0, 0.0]
-
-                if (target_pos[0] - x_dis_tar) > 0.13:
+                print(" pose in base",target_pos)
+                
+                if (target_pos[0] - x_dis_tar) > 0.40:
                     cmd_vel[0] = 0.3
-                elif (target_pos[0] - x_dis_tar) > 0.08:
-                    cmd_vel[0] = 0.2
-                elif (target_pos[0] - x_dis_tar) < -0.08:
-                    cmd_vel[0] = -0.15
-                elif (target_pos[0] - x_dis_tar) > 0.07:
+                elif (target_pos[0] - x_dis_tar) > 0.30:
                     cmd_vel[0] = 0.15
-                elif (target_pos[0] - x_dis_tar) < -0.07:
-                    cmd_vel[0] = -0.15
+                elif (target_pos[0] - x_dis_tar) > 0.20:
+                    cmd_vel[0] = 0.1
+                elif (target_pos[0] - x_dis_tar) > 0.08:
+                    cmd_vel[0] = 0.0
+                elif (target_pos[0] - x_dis_tar) < -0.08:
+                    cmd_vel[0] = -0.1
+                elif (target_pos[0] - x_dis_tar) > 0.05:
+                    cmd_vel[0] = 0.1
+                elif (target_pos[0] - x_dis_tar) < -0.05:
+                    cmd_vel[0] = -0.1
                 elif (target_pos[0] - x_dis_tar) > 0.02:
-                    cmd_vel[0] = 0.12
+                    cmd_vel[0] = 0.1
                 elif (target_pos[0] - x_dis_tar) < -0.02:
-                    cmd_vel[0] = -0.12
+                    cmd_vel[0] = -0.1
 
                 if (target_pos[1] - 0.0) > 0.035 or (target_pos[1] - 0.0) < -0.035:
                     cmd_vel[0] = 0.0

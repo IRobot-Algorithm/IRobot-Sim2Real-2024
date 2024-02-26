@@ -8,7 +8,7 @@ import rospy
 import onnxruntime
 import numpy as np
 
-onnx_model_path = os.path.join(os.path.dirname(__file__), "model/CNN_s.onnx")
+onnx_model_path = os.path.join(os.path.dirname(__file__), "model/CNN_v2.onnx")
 # 创建ONNX Runtime会话
 session = onnxruntime.InferenceSession(onnx_model_path)
 
