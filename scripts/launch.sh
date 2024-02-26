@@ -36,6 +36,7 @@ docker run -it --rm --name client --network net-sim \
 	-e NO_AT_BRIDGE=1 \
 	-e LIBGL_ALWAYS_SOFTWARE=1 \
 	-v /tmp/.X11-unix:/tmp/.X11-unix \
+	-v ./src/rmus_solution:/opt/ep_ws/src/rmus_solution \
 	-v ./src/navigation:/opt/ep_ws/src/navigation \
 	--privileged=true -u=root \
 	$CLIENT_IMAGE $CLI_EXE
