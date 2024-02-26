@@ -126,7 +126,7 @@ class manipulater:
                     target_marker_pose
                 )
                 cmd_vel = [0.0, 0.0, 0.0]
-                print(" pose in base",target_pos)
+                #print(" pose in base",target_pos)
                 
                 if (target_pos[0] - x_dis_tar) > 0.40:
                     cmd_vel[0] = 0.3
