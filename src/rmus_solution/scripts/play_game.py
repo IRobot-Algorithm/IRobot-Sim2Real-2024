@@ -55,7 +55,7 @@ def grip(gameinfo , is_here, response):
         if check_topic_messages("/get_blockinfo") and is_here == 0:#判断是否识别到了目标方块
             print("这里有目标方块"+ str(target))
             if catch():
-                is_here = 2#表示微调飘了 
+                is_here = 2#表示微调超时了 
                 return is_here,response
             rospy.sleep(2)#给抓取好方块留出时间
             try:
@@ -64,7 +64,7 @@ def grip(gameinfo , is_here, response):
                     times = 0#尝试重新抓取的次数
                     while target in blockinfo.data and times<20:#若抓不上会尝试抓20次
                         times = times + 1
-                        rospy.logerr("抓取失败,将进行第"+str(times)+"次抓取")
+                        rospy.logerr("抓取失败,将进行第"+str(times+1)+"次抓取")
                         if catch():
                             is_here = 2
                             return is_here,response
@@ -89,8 +89,8 @@ def grip(gameinfo , is_here, response):
                 break;
     return is_here,response
 
-def go_to_another_side(location):
-    rospy.loginfo("准备去此矿区的另一侧")
+# def go_to_another_side(location):
+#     rospy.loginfo("准备去此矿区")
 
 
 if __name__ == '__main__':
@@ -161,11 +161,11 @@ if __name__ == '__main__':
         navigation_result = navigation(6+i, "")#暂时没写放到哪个上面
         print("         到达目的地"+str(6+i))#输出到达了兑换站 
 
-        if is_here == 2:
-            #去此矿区的另一侧
-            go_to_another_side(location)
+        # if is_here == 2:
+        #     #去此矿区的另一侧
+        #     go_to_another_side(location)
 
-        
+
         response = img_switch_mode(7+i)
         rospy.sleep(0.5)
         trimer_response = trimer(2,"")

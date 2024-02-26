@@ -179,6 +179,7 @@ class manipulater:
                 if current_time2.secs - current_time1.secs > 20:#如果微调时间超过20秒
                     rospy.logerr("微调时间过长")
                     self.timeout_pub.publish(True)
+                    rospy.sleep(2)
                     return resp
                 self.timeout_pub.publish(False)
                 if np.abs(target_pos[0] - x_dis_tar) <= 0.02 and (
