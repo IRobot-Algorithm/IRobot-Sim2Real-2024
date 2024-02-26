@@ -145,7 +145,7 @@ class manipulater:
                 elif (target_pos[0] - x_dis_tar) > 0.20:
                     cmd_vel[0] = 0.1
                 elif (target_pos[0] - x_dis_tar) > 0.08:
-                    cmd_vel[0] = 0.0
+                    cmd_vel[0] = 0.1
                 elif (target_pos[0] - x_dis_tar) < -0.08:
                     cmd_vel[0] = -0.1
                 elif (target_pos[0] - x_dis_tar) > 0.05:
@@ -228,7 +228,7 @@ class manipulater:
             flag = 0
             y_threshold_p = 0.018
             y_threshold_n = 0.018
-            x_dis_tar = 0.335
+            x_dis_tar = 0.385
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
@@ -338,7 +338,7 @@ class manipulater:
         rospy.loginfo("<manipulater>: now prepare to grip")
         pose = Pose()
         pose.position.x = 0.21
-        pose.position.y = 0.0
+        pose.position.y = -0.035
         self.arm_position_pub.publish(pose)
 
 
