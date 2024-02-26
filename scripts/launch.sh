@@ -29,7 +29,7 @@ echo "server is finished"
 
 docker run -it --rm --name client --network net-sim \
 	--gpus all \
-	--cpus=8 -m 8192M \
+	--cpus=7.0 -m 8192M \
 	-e ROS_MASTER_URI=http://ros-master:11311 \
 	-e DISPLAY=$DISPLAY \
 	-e QT_X11_NO_MITSHM=1 \
