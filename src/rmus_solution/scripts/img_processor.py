@@ -88,7 +88,7 @@ class Processor:
             1000 * (image.header.stamp.secs - self.start_time)
         )
         locked_current_mode = self.current_mode
-        print("detect mode recieved:", locked_current_mode)
+        #print("detect mode recieved:", locked_current_mode)
         if locked_current_mode == 10: # 获得兑换站上方3位目标数字
             detected_gameinfo = self.get_gameinfo(self.image)
             if detected_gameinfo is None:
@@ -113,8 +113,10 @@ class Processor:
                 pass
             else:
                 self.pub_b.publish(self.latest_pose)
+                # self.latest_pose.position = None
+                # self.latest_pose.orientation = None
             self.pub_all_ID.publish(UInt8MultiArray(data=self.all_detectd_ID))
-            print("publish pose once used: ", int((rospy.Time.now().to_nsec() - t_begin)/1e6), "ms")
+            #print("publish pose once used: ", int((rospy.Time.now().to_nsec() - t_begin)/1e6), "ms")
         elif locked_current_mode == 0:
             self.current_visualization_image = self.image
         else:

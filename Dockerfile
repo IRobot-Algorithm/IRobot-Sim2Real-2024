@@ -17,9 +17,10 @@ RUN apt-get update -q && \
 # Install extra dependencies with apt
 RUN apt-get update && \
      apt-get install -y --no-install-recommends \
-     ros-noetic-depthimage-to-laserscan ros-noetic-map-server python3-tf-conversions ros-noetic-global-planner vim && \
+     ros-noetic-depthimage-to-laserscan ros-noetic-map-server python3-tf-conversions ros-noetic-global-planner vim \
+     ros-noetic-rqt ros-noetic-rqt-common-plugins && \
      rm -rf /var/lib/apt/lists/* && apt-get clean
-
+ 
 # Install extra dependencies with pip
 RUN pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple scipy
 RUN pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple onnxruntime
@@ -37,7 +38,7 @@ RUN echo "source /opt/ep_ws/devel/setup.bash" >> ~/.bashrc
 RUN chmod +x /opt/start.sh
 RUN chmod +x /opt/ep_ws/src/rmus_solution/scripts/*
 
-CMD /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh /opt/start.sh
+CMD chmod +x /opt/ep_ws/src/rmus_solution/scripts/*; /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh /opt/start.sh
 
 # navigation
 # CMD source /opt/workspace/devel_isolated/setup.bash && catkin_make install --use-ninja -DSETUPTOOLS_DEB_LAYOUT=OFF; /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh /opt/start.sh
