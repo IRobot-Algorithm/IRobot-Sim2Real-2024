@@ -11,35 +11,10 @@ from std_msgs.msg import Bool
 
 timeout = False
 
-def get_boxid_blockid_inorder(gameinfo):
-    return [0,1,2], [gameinfo[0], gameinfo[1], gameinfo[2]]
-
-# def compare_poses(pose1, pose2):
-#     # Compare position
-#     rospy.loginfo("Comparing position~~~~~~~~~~~")
-#     pos1 = pose1.pose.position
-#     pos2 = pose2.pose.position
-#     rospy.loginfo("Comparing position!!!!!!!!!!!!!!!!!!!!")
-#     if pos1.x != pos2.x or pos1.y != pos2.y or pos1.z != pos2.z:
-#         return False
-
-#     # Compare orientation
-#     ori1 = pose1.pose.orientation
-#     ori2 = pose2.pose.orientation
-#     if ori1.x != ori2.x or ori1.y != ori2.y or ori1.z != ori2.z or ori1.w != ori2.w:
-#         return False
-    
-#     return True
 def set_timeout(data):
     global timeout 
     timeout = data
     
-# def check_topic_messages(topic_name):
-#     try:
-#         rospy.wait_for_message(topic_name, Pose, timeout=1)
-#     except rospy.exceptions.ROSException:
-#         return False
-#     return True
 
 def catch():
     trimer_response = trimer(1,"")
@@ -54,9 +29,10 @@ def grip(gameinfo , is_here, response):
         block_num = i
         response = img_switch_mode(target)#切换为识别对应目标
         rospy.sleep(0.5)
-        blockinfo = rospy.wait_for_message("/all_detect_ID", UInt8MultiArray, timeout=1)
-        output_str = "blockinfo.data = {}".format(blockinfo.data)
-        print(output_str)
+        # blockinfo = rospy.wait_for_message("/all_detect_ID", UInt8MultiArray, timeout=1)
+        # output_str = "blockinfo.data = {}".format(blockinfo.data)
+        # 不知为什么输出不了这个列表,问问曾阳
+        # print(output_str)
         if target in blockinfo.data and is_here != 1:#判断是否识别到了目标方块
             print("这里有目标方块"+ str(target))
             if catch(): 
@@ -205,7 +181,7 @@ if __name__ == '__main__':
         if is_here ==1:
             put(block_num)
             rest_block = rest_block -1
-        
+            rospy.loginfo("还剩"+str(rest_block)+"个方块")
 
 
 
