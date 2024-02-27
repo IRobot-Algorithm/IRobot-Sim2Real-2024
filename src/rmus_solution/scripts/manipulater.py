@@ -140,16 +140,16 @@ class manipulater:
                 cmd_vel = [0.0, 0.0, 0.0]
                 #print(" pose in base",target_pos)
                 
-                if (target_pos[0] - x_dis_tar) > 0.40:
-                    cmd_vel[0] = 0.3
-                elif (target_pos[0] - x_dis_tar) > 0.30:
-                    cmd_vel[0] = 0.15
+                # if (target_pos[0] - x_dis_tar) > 0.40:
+                #     cmd_vel[0] = 0.3
+                if (target_pos[0] - x_dis_tar) > 0.30:
+                    cmd_vel[0] = 0.25
                 elif (target_pos[0] - x_dis_tar) > 0.20:
-                    cmd_vel[0] = 0.1
+                    cmd_vel[0] = 0.18
                 elif (target_pos[0] - x_dis_tar) > 0.08:
-                    cmd_vel[0] = 0.1
+                    cmd_vel[0] = 0.13
                 elif (target_pos[0] - x_dis_tar) < -0.08:
-                    cmd_vel[0] = -0.1
+                    cmd_vel[0] = -0.13
                 elif (target_pos[0] - x_dis_tar) > 0.05:
                     cmd_vel[0] = 0.1
                 elif (target_pos[0] - x_dis_tar) < -0.05:
@@ -242,7 +242,7 @@ class manipulater:
             flag = 0
             y_threshold_p = 0.018
             y_threshold_n = 0.018
-            x_dis_tar = 0.345
+            x_dis_tar = 0.385
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
@@ -443,7 +443,7 @@ class manipulater:
     def pre2(self):
         rospy.loginfo("<manipulater>: level 2 place")
         pose = Pose()
-        pose.position.x = 0.19
+        pose.position.x = 0.21
         pose.position.y = 0.015
         self.arm_position_pub.publish(pose)
         
