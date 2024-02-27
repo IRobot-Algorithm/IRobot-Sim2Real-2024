@@ -29,7 +29,7 @@ def grip(gameinfo , is_here, response):
         block_num = i
         response = img_switch_mode(target)#切换为识别对应目标
         rospy.sleep(0.5)
-        # blockinfo = rospy.wait_for_message("/all_detect_ID", UInt8MultiArray, timeout=1)
+        blockinfo = rospy.wait_for_message("/all_detect_ID", UInt8MultiArray, timeout=1)
         # output_str = "blockinfo.data = {}".format(blockinfo.data)
         # 不知为什么输出不了这个列表,问问曾阳
         # print(output_str)
