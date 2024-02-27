@@ -127,6 +127,8 @@ class manipulater:
             y_threshold_p = 0.018
             y_threshold_n = 0.018
             x_dis_tar = 0.335
+            flag_r = 0
+            theta = 0.10
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
                 if target_marker_pose is None:
@@ -172,6 +174,18 @@ class manipulater:
                     cmd_vel[1] = -0.11
 
                 flag = 1
+                
+                                # if (target_angle - 0.0) > theta:
+                #     if flag_r == 0:
+                #         flag_r = 1
+                #         theta += 0.02
+                #     cmd_vel[2] = -0.2
+                # elif (target_angle - 0.0) < -theta:
+                #     if flag_r == 0:
+                #         flag_r = 1
+                #         theta += 0.02
+                #     cmd_vel[2] = 0.2
+                # flag_r = 1
                 
                 cmd_vel[2] = 0
                 if np.abs(target_pos[0] - x_dis_tar) <= 0.02 and (
@@ -228,7 +242,7 @@ class manipulater:
             flag = 0
             y_threshold_p = 0.018
             y_threshold_n = 0.018
-            x_dis_tar = 0.385
+            x_dis_tar = 0.345
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
@@ -303,7 +317,92 @@ class manipulater:
 
             resp.res = True
             resp.response = "Successfully Place"
+            return resp
+    
+        elif req.mode == 3:
+            rospy.loginfo("First trim then place")
+
+            self.pre2()
+            flag = 0
+            y_threshold_p = 0.018
+            y_threshold_n = 0.018
+            x_dis_tar = 0.345
+
+            while not rospy.is_shutdown():
+                target_marker_pose = self.current_marker_poses
+                if target_marker_pose is None:
+                    continue
+                
+                target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
+                    target_marker_pose
+                )
+                cmd_vel = [0.0, 0.0, 0.0]
+
+                if (target_pos[0] - x_dis_tar) > 0.1:
+                    cmd_vel[0] = 0.14
+                elif (target_pos[0] - x_dis_tar) < -0.1:
+                    cmd_vel[0] = -0.14
+                elif (target_pos[0] - x_dis_tar) > 0.02:
+                    cmd_vel[0] = 0.12
+                elif (target_pos[0] - x_dis_tar) < -0.02:
+                    cmd_vel[0] = -0.12
+
+                if (target_pos[1] - 0.0) > 0.05 or (target_pos[1] - 0.0) < -0.05:
+                    cmd_vel[0] = 0.0
+
+                if (target_pos[1] - 0.0) > y_threshold_p:
+                    if flag == 0:
+                        flag = 1
+                        y_threshold_p += 0.01
+                    cmd_vel[1] = 0.11
+                elif (target_pos[1] - 0.0) < -y_threshold_n:
+                    if flag == 0:
+                        flag = 1
+                        y_threshold_n += 0.01
+                    cmd_vel[1] = -0.11
+                flag = 1
+
+                cmd_vel[2] = 0
+                self.sendBaseVel(cmd_vel)
+                if np.abs(target_pos[0] - x_dis_tar) <= 0.02 and (
+                    (target_pos[1] - 0.0) <= y_threshold_p
+                    and (0.0 - target_pos[1]) <= y_threshold_n
+                ):
+                    rospy.loginfo("Trim well in the all dimention, going open loop")
+                    self.sendBaseVel([0.0, 0.0, 0.0])
+                    rospy.sleep(1.0)
+                    self.sendBaseVel([0.25, 0.0, 0.0])
+                    rospy.sleep(0.3)
+                    self.sendBaseVel([0.25, 0.0, 0.0])
+                    rospy.sleep(0.3)
+                    self.sendBaseVel([0.0, 0.0, 0.0])
+                    rospy.loginfo("Place: reach the goal for placing.")
+                    break
+                rate.sleep()
+
             
+            rospy.loginfo("Trim well in the horizon dimention")
+
+            
+
+            target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
+                self.current_marker_poses
+            )
+            self.sendBaseVel([0.0, 0.0, 0.0])
+            rospy.sleep(1.0)
+            self.open_gripper()
+            rospy.sleep(1.0)
+            reset_thread = threading.Thread(target=self.reset_arm)
+            reset_thread.start()
+
+            self.sendBaseVel([-0.3, 0.0, 0.0])
+            rospy.sleep(0.6)
+            self.sendBaseVel([0.0, 0.0, 0.0])
+
+            resp.res = True
+            resp.response = "Successfully Place"
+            return resp
+        
         return resp
 
     def open_gripper(self):
@@ -339,6 +438,27 @@ class manipulater:
         pose = Pose()
         pose.position.x = 0.21
         pose.position.y = -0.035
+        self.arm_position_pub.publish(pose)
+        
+    def pre2(self):
+        rospy.loginfo("<manipulater>: level 2 place")
+        pose = Pose()
+        pose.position.x = 0.19
+        pose.position.y = 0.015
+        self.arm_position_pub.publish(pose)
+        
+    def pre3(self):
+        rospy.loginfo("<manipulater>: level 3 place")
+        pose = Pose()
+        pose.position.x = 0.19
+        pose.position.y = 0.065
+        self.arm_position_pub.publish(pose)
+    
+    def pre4(self):
+        rospy.loginfo("<manipulater>: level 4 place")
+        pose = Pose()
+        pose.position.x = 0.19
+        pose.position.y = 0.115
         self.arm_position_pub.publish(pose)
 
 
