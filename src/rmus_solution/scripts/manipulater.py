@@ -14,7 +14,7 @@ from std_msgs.msg import Bool
 
 import tf2_ros
 import tf2_geometry_msgs
-
+import control
 
 class manipulater:
     def __init__(self) -> None:
@@ -242,7 +242,7 @@ class manipulater:
             flag = 0
             y_threshold_p = 0.018
             y_threshold_n = 0.018
-            x_dis_tar = 0.345
+            x_dis_tar = 0.385
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
