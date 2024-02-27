@@ -181,7 +181,7 @@ class manipulater:
                     cmd_vel = [0.0, 0.0, 0.0]
                 self.sendBaseVel(cmd_vel)
                 current_time2 = rospy.Time.now()
-                if current_time2.secs - current_time1.secs > 20:#如果微调时间超过20秒
+                if current_time2.secs - current_time1.secs > 10:#如果微调时间超过20秒
                     rospy.logerr("微调时间过长")
                     self.timeout_pub.publish(True)
                     rospy.sleep(2)
