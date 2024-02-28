@@ -188,7 +188,6 @@ if __name__ == '__main__':
 
 
 
-
     navigation_result = navigation(9, "")
 
     gameinfo = rospy.wait_for_message("/get_gameinfo", UInt8MultiArray, timeout=7)
