@@ -195,7 +195,7 @@ class manipulater:
                     cmd_vel = [0.0, 0.0, 0.0]
                 self.sendBaseVel(cmd_vel)
                 current_time2 = rospy.Time.now()
-                if current_time2.secs - current_time1.secs > 10:#如果微调时间超过20秒
+                if current_time2.secs - current_time1.secs > 20:#如果微调时间超过20秒
                     rospy.logerr("微调时间过长")
                     self.timeout_pub.publish(True)
                     rospy.sleep(2)
@@ -242,7 +242,9 @@ class manipulater:
             flag = 0
             y_threshold_p = 0.018
             y_threshold_n = 0.018
-            x_dis_tar = 0.385
+            x_dis_tar = 0.351
+            flag_r = 0
+            theta = 0.10
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
@@ -277,12 +279,26 @@ class manipulater:
                         y_threshold_n += 0.01
                     cmd_vel[1] = -0.11
                 flag = 1
+                
+                if (target_angle - 0.0) > theta:
+                    if flag_r == 0:
+                        flag_r = 1
+                        theta += 0.02
+                    cmd_vel[2] = -0.2
+                elif (target_angle - 0.0) < -theta:
+                    if flag_r == 0:
+                        flag_r = 1
+                        theta += 0.02
+                    cmd_vel[2] = 0.2
+                flag_r = 1
 
-                cmd_vel[2] = 0
+                #cmd_vel[2] = 0
                 self.sendBaseVel(cmd_vel)
                 if np.abs(target_pos[0] - x_dis_tar) <= 0.02 and (
                     (target_pos[1] - 0.0) <= y_threshold_p
-                    and (0.0 - target_pos[1]) <= y_threshold_n
+                    and (0.0 - target_pos[1]) <= y_threshold_n 
+                    and(target_angle - 0.0) < theta
+                    and(target_angle - 0.0) > -theta
                 ):
                     rospy.loginfo("Trim well in the all dimention, going open loop")
                     self.sendBaseVel([0.0, 0.0, 0.0])
@@ -326,7 +342,9 @@ class manipulater:
             flag = 0
             y_threshold_p = 0.018
             y_threshold_n = 0.018
-            x_dis_tar = 0.345
+            x_dis_tar = 0.351
+            flag_r = 0
+            theta = 0.10
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
@@ -361,12 +379,26 @@ class manipulater:
                         y_threshold_n += 0.01
                     cmd_vel[1] = -0.11
                 flag = 1
+                
+                if (target_angle - 0.0) > theta:
+                    if flag_r == 0:
+                        flag_r = 1
+                        theta += 0.02
+                    cmd_vel[2] = -0.2
+                elif (target_angle - 0.0) < -theta:
+                    if flag_r == 0:
+                        flag_r = 1
+                        theta += 0.02
+                    cmd_vel[2] = 0.2
+                flag_r = 1
 
-                cmd_vel[2] = 0
+                #cmd_vel[2] = 0
                 self.sendBaseVel(cmd_vel)
                 if np.abs(target_pos[0] - x_dis_tar) <= 0.02 and (
                     (target_pos[1] - 0.0) <= y_threshold_p
                     and (0.0 - target_pos[1]) <= y_threshold_n
+                    and(target_angle - 0.0) < theta
+                    and(target_angle - 0.0) > -theta
                 ):
                     rospy.loginfo("Trim well in the all dimention, going open loop")
                     self.sendBaseVel([0.0, 0.0, 0.0])
@@ -437,27 +469,27 @@ class manipulater:
         rospy.loginfo("<manipulater>: now prepare to grip")
         pose = Pose()
         pose.position.x = 0.21
-        pose.position.y = -0.035
+        pose.position.y = -0.036
         self.arm_position_pub.publish(pose)
         
     def pre2(self):
         rospy.loginfo("<manipulater>: level 2 place")
         pose = Pose()
         pose.position.x = 0.21
-        pose.position.y = 0.015
+        pose.position.y = 0.014
         self.arm_position_pub.publish(pose)
         
     def pre3(self):
         rospy.loginfo("<manipulater>: level 3 place")
         pose = Pose()
-        pose.position.x = 0.19
+        pose.position.x = 0.21
         pose.position.y = 0.065
         self.arm_position_pub.publish(pose)
     
     def pre4(self):
         rospy.loginfo("<manipulater>: level 4 place")
         pose = Pose()
-        pose.position.x = 0.19
+        pose.position.x = 0.21
         pose.position.y = 0.115
         self.arm_position_pub.publish(pose)
 

@@ -158,7 +158,7 @@ def update_rest_block(mode):
     return sum
 if __name__ == '__main__':
     rospy.init_node("gamecore_node")
-    game_begin_time = rospy.Time.now().to_sec()
+    # game_begin_time = rospy.Time.now().to_sec()
     while not rospy.is_shutdown():
         try:
             rospy.wait_for_service("/set_navigation_goal", 1.0)
@@ -184,6 +184,7 @@ if __name__ == '__main__':
             rospy.sleep(0.5)
 
     rospy.loginfo("Get all rospy sevice!")
+    game_begin_time = rospy.Time.now().to_sec()
     navigation = rospy.ServiceProxy("/set_navigation_goal", setgoal)
     trimer = rospy.ServiceProxy("/let_manipulater_work", graspsignal)
     img_switch_mode = rospy.ServiceProxy("/image_processor_switch_mode", switch)
