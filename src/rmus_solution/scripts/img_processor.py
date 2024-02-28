@@ -100,10 +100,11 @@ class Processor:
                     and detected_gameinfo[2] == self.detected_gameinfo[2]
                 ):
                     self.pub_p.publish(UInt8MultiArray(data=self.detected_gameinfo))
-                    rospy.loginfo("Second gameinfo get, publishing")
-                else:
-                    rospy.loginfo("First gameinfo get")
-                    rospy.loginfo(detected_gameinfo)
+                    #rospy.loginfo("Second gameinfo get, publishing")
+               # else:
+                    # rospy.loginfo("First gameinfo get")
+                    # rospy.loginfo(detected_gameinfo)
+
                 self.detected_gameinfo = detected_gameinfo
             self.current_visualization_image = self.image
         elif locked_current_mode <= 9 and locked_current_mode >= 1:
@@ -116,11 +117,25 @@ class Processor:
                 self.pub_b.publish(self.latest_pose)
                 # self.latest_pose.position = None
                 # self.latest_pose.orientation = None
-            #print(self.all_detectd_ID)
+            #print("self.all_detectd_ID = " +str(self.all_detectd_ID))
             self.pub_all_ID.publish(UInt8MultiArray(data=self.all_detectd_ID))
             #print("publish pose once used: ", int((rospy.Time.now().to_nsec() - t_begin)/1e6), "ms")
         elif locked_current_mode == 0:
             self.current_visualization_image = self.image
+        elif locked_current_mode == 11:
+            self.all_detectd_ID = []
+            t_begin = rospy.Time.now().to_nsec()
+            self.update_uint32_data(locked_current_mode)
+            # if self.uint32data[locked_current_mode - 1] is None:
+            #     pass
+            # else:
+            #     self.pub_b.publish(self.latest_pose)
+                # self.latest_pose.position = None
+                # self.latest_pose.orientation = None
+            
+            
+            #print("self.all_detectd_ID = " +str(self.all_detectd_ID))
+            self.pub_all_ID.publish(UInt8MultiArray(data=self.all_detectd_ID))
         else:
             assert False
 
@@ -128,7 +143,7 @@ class Processor:
         self.depth_img = self.bridge.imgmsg_to_cv2(image, "32FC1")
 
     def modeCallBack(self, req):
-        if 0 <= req.mode <= 10:
+        if 0 <= req.mode <= 11:
             self.current_mode = req.mode
             return switchResponse(self.current_mode)
         else:
@@ -163,7 +178,8 @@ class Processor:
 
     def update_uint32_data(self, blockid):
         all_ID = []
-        last_info = self.uint32data[blockid - 1]
+        if blockid <= 9 and blockid >= 1:
+            last_info = self.uint32data[blockid - 1]
         if blockid <= 6 and blockid >= 1:
             (
                 id_list,
@@ -198,6 +214,28 @@ class Processor:
                 verbose=self.verbose,
                 height_range=(0.00, 0.06),
             )
+        
+        elif blockid == 11:
+            (
+                id_list,
+                quads_list,
+                area_list,
+                tvec_list,
+                rvec_list,
+                all_ID,
+                minareas_list,
+            ) = marker_detection(
+                self.image,
+                camera_matrix=self.camera_matrix,
+                template_ids=[],
+                area_filter_size=1200,
+                verbose=self.verbose,
+                height_range=(0.00, 0.06),
+            )
+            self.all_detectd_ID = list(set(all_ID))
+            return
+
+        self.all_detectd_ID = list(set(all_ID))
 
         pose_list = [pose_aruco_2_ros(r, t) for t, r in zip(tvec_list, rvec_list)]
 
@@ -264,7 +302,7 @@ class Processor:
                     [[last_info[5], last_info[6]]],
                     [[last_info[7], last_info[8]]],
                 ],
-                dtype=np.int,
+                dtype=int,
             )
             depth = self.get_current_depth(old_quads)  # bug
             self.uint32data[blockid - 1][10] = depth
@@ -395,7 +433,6 @@ class Processor:
             )
         self.latest_pose = pose_list[best_id] # 发送的pose
         self.uint32data[blockid - 1] = blockinfo
-        self.all_detectd_ID = list(set(all_ID))
         return
 
     def get_current_depth(self, quads):
