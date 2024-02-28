@@ -44,14 +44,14 @@ def tell_is_here(block_id):#判断此方块在没在这里
 
 def grip():
     for i in range(1,7):
-        if blocks[i].mode == 0 and tell_is_here(i):
+        if blocks[i].mode != -1 and tell_is_here(i):
             print("这里有目标方块"+ str(i))
             img_switch_mode(i)
             if catch():
                 return False
             rospy.sleep(1)
             times = 1
-            while tell_is_here(i) and times < 1 :# 尝试五次抓取
+            while tell_is_here(i) and times < 5 :# 尝试五次抓取
                 times = times + 1
                 rospy.logerr("抓取失败，将进行第"+str(times)+"抓取")
                 if catch(): 
@@ -76,6 +76,7 @@ def go_to_another_side(location):#去当前矿区的另一侧
     add_area_information(location//10)
 
 def put():
+    if blocks[my_robot.block].mode == 1:
         address_name = ['B','O','X']
         navigation(6+blocks[my_robot.block].placement, "")
         rospy.loginfo("到达兑换站"+address_name[blocks[my_robot.block].placement])#输出到达了兑换站 
@@ -83,6 +84,14 @@ def put():
         rospy.sleep(0.5)
         trimer(2,"")
         blocks[my_robot.block].is_set = 1
+    if blocks[my_robot.block].mode == 2:
+        address_name = ['B','O','X']
+        navigation(6+blocks[my_robot.block].placement, "")
+        rospy.loginfo("到达兑换站"+address_name[blocks[my_robot.block].placement])#输出到达了兑换站 
+        img_switch_mode(7+blocks[my_robot.block].placement)
+        rospy.sleep(0.5)
+        trimer(3,"")
+        blocks[my_robot.block].is_set = 1        
 
 def update_block_location(area, block_place_information):#更新矿石的位置信息
     for i in range(1,7):
@@ -124,7 +133,6 @@ def detect_area(area):#对指定矿区进行一次抓取、放置的全过程。
     
 
 def grip_specified_block(block):
-    #print("112321321  block.location*10+1="+str(block.location*10+1))
     go_to(block.location*10+1)
     img_switch_mode(11)#此模式，便于识别ID以加入到集合里 
 
@@ -142,10 +150,10 @@ def grip_specified_block(block):
     else:
         return False
     
-def update_rest_block():
+def update_rest_block(mode):
     sum = 0
     for i in range(1,7):
-        if blocks[i].mode == 0 and blocks[i].is_set == 0:
+        if blocks[i].mode == mode and blocks[i].is_set == 0:
             sum+=1
     return sum
 if __name__ == '__main__':
@@ -186,9 +194,9 @@ if __name__ == '__main__':
     trim_res = trimer(0, "")
     img_switch_mode(10)
 
+    my_robot = robot()
 
-
-    navigation_result = navigation(9, "")
+    navigation(9, "")
 
     gameinfo = rospy.wait_for_message("/get_gameinfo", UInt8MultiArray, timeout=7)
 
@@ -198,7 +206,7 @@ if __name__ == '__main__':
     for i,ID in enumerate(gameinfo.data):
         blocks[ID].ID = ID
         blocks[ID].placement = i
-        blocks[ID].mode = 0
+        blocks[ID].mode = 1
 
 
     rest_block = 3#剩余的方块
@@ -212,28 +220,65 @@ if __name__ == '__main__':
 
     while rest_block > 0:
         for i in range(1, 7):
-            #print("wow  blocks["+str(i)+"].location="+str(blocks[i].location))
-            if blocks[i].mode == 0 and blocks[i].location != -1:
+            if blocks[i].mode == 1 and blocks[i].location != -1:
                 grip_specified_block(blocks[i])
 
-        rest_block = update_rest_block()
+        rest_block = update_rest_block(1)
 
         if rest_block > 0:
             detect_area(1)
-        rest_block = update_rest_block()
+        rest_block = update_rest_block(1)
   
         if rest_block > 0:
             detect_area(2)
-        rest_block = update_rest_block()
+        rest_block = update_rest_block(1)
 
         if rest_block > 0:
             detect_area(3)
-        rest_block = update_rest_block()
+        rest_block = update_rest_block(1)
+
+    rest_block = 3
+    for i in range(1,7):
+        if blocks[i].is_set ==0:
+            blocks[i].mode =2
+            rest_block -= 1
+            blocks[i].placement = rest_block 
+    #         if blocks[i].location != -1:
+    #             while True:
+    #                 if grip_specified_block(blocks[i]):
+    #                     break
+    #     rest_block = 
+
+    while rest_block > 0:
+        for i in range(1, 7):
+            if blocks[i].mode == 2 and blocks[i].location != -1:
+                grip_specified_block(blocks[i])
+
+        rest_block = update_rest_block(2)
+
+        if rest_block > 0:
+            detect_area(1)
+        rest_block = update_rest_block(2)
+  
+        if rest_block > 0:
+            detect_area(2)
+        rest_block = update_rest_block(2)
+
+        if rest_block > 0:
+            detect_area(3)
+        rest_block = update_rest_block(2)
+
+    rest_block = 0
+
+                
 
 
 
     navigation_result = navigation(5, "")
-    
+
+
+
+
 
     game_total_time = rospy.Time.now().to_sec()-game_begin_time
     print("game_total_time:", game_total_time)
