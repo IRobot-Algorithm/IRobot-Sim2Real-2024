@@ -248,7 +248,7 @@ if __name__ == '__main__':
     #                 if grip_specified_block(blocks[i]):
     #                     break
     #     rest_block = 
-
+    rest_block = 3
     while rest_block > 0:
         for i in range(1, 7):
             if blocks[i].mode == 2 and blocks[i].location != -1:
@@ -267,7 +267,7 @@ if __name__ == '__main__':
         if rest_block > 0:
             detect_area(3)
         rest_block = update_rest_block(2)
-
+    
     rest_block = 0
 
                 
