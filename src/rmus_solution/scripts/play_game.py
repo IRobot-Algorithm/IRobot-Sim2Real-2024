@@ -49,7 +49,7 @@ def grip():
             img_switch_mode(i)
             if catch():
                 return False
-            rospy.sleep(2)
+            rospy.sleep(1)
             times = 1
             while tell_is_here(i) and times < 1 :# 尝试五次抓取
                 times = times + 1
