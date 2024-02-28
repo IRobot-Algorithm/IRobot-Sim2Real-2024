@@ -90,6 +90,7 @@ def put(block_num):
 
 if __name__ == '__main__':
     rospy.init_node("gamecore_node")
+    game_begin_time = rospy.Time.now().to_sec()
     
     while not rospy.is_shutdown():
         try:
@@ -190,5 +191,6 @@ if __name__ == '__main__':
 
 
     navigation_result = navigation(5, "")
-    
+    game_total_time = rospy.Time.now().to_sec()-game_begin_time
+    print("game_total_time:", game_total_time)
     response = img_switch_mode(0)
