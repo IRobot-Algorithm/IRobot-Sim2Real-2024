@@ -1,7 +1,7 @@
 <launch>
   <!-- Arguments -->
   <arg name="obs_map_file" default="$(find move_base)/maps/cartographer/obs_map.yaml"/>
-  <arg name="open_rviz" default="true"/>
+  <arg name="open_rviz" default="false"/>
 
   <!-- scan -->
   <include file="$(find ira_laser_tools)/launch/merge_rgbd_lidar_scan.launch"/>
@@ -23,10 +23,10 @@
   <include file="$(find move_base)/launch/move_base.launch"/>
 
   <!-- rviz -->
-  <group if="$(arg open_rviz)"> 
+  <!-- <group if="$(arg open_rviz)"> 
     <node pkg="rviz" type="rviz" name="rviz" required="true"
           args="-d $(find move_base)/rviz/teb.rviz"/>
-  </group>
+  </group> -->
 
 </launch>
 
