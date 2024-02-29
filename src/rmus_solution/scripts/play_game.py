@@ -31,7 +31,7 @@ def set_timeout(data):
 
 def tell_go_park_hard():
     # if rospy.Time.now().to_sec() - game_begin_time < 20:
-    if 300 - (rospy.Time.now().to_sec() - game_begin_time) < 20:
+    if 300 - (rospy.Time.now().to_sec() - game_begin_time) < -9999:#记得改为20
         print("距离游戏结束还有:",rospy.Time.now().to_sec() - game_begin_time,"将回到初始区")
         go_to(5)
         rospy.sleep(2000)
@@ -113,14 +113,17 @@ def remove_block_information(block_id):
 
 def add_area_information(area):#添加当前画面识别到的所有矿石
     img_switch_mode(11)
-    area = area - 1
     blockinfo = rospy.wait_for_message("/all_detect_ID", UInt8MultiArray, timeout=1)
     block_place_information[area].update(blockinfo.data)
-    update_block_location(area+1, block_place_information[area])
+    if 0 in block_place_information[area]:
+        block_place_information[area].discard(0)
+        print("已移除掉0")
+        print("block_place_information[",area,"]",block_place_information[area])
+    update_block_location(area, block_place_information[area])
 
 def remove_area_information(block_id):
     block_place_information[blocks[block_id].area].discard(block_id)
-
+    print("block_place_information[",blocks[block_id].area,"]=",block_place_information[blocks[block_id].area])
 
 def go_to(location):#仅仅是去那里
     if location != 5:
@@ -129,6 +132,7 @@ def go_to(location):#仅仅是去那里
     my_robot.location = location
     
 def there_are_blocks(area):#判断此处有没有方块
+    print("block_place_information[",area,"]=",block_place_information[area])
     if len(block_place_information[area]) == 0:
         return False
     return True
