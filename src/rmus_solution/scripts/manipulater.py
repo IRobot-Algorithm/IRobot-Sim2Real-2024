@@ -14,7 +14,7 @@ from std_msgs.msg import Bool
 
 import tf2_ros
 import tf2_geometry_msgs
-import control
+from simple_pid import PID
 
 class manipulater:
     def __init__(self) -> None:
@@ -39,6 +39,19 @@ class manipulater:
         self.service = rospy.Service(
             "/let_manipulater_work", graspsignal, self.trimerworkCallback
         )
+
+        self.kp = 1.0
+        self.ki = 0.1
+        self.kd = 0.0
+        self.x_dis_tar = 0.335
+        self.adjust_speed_lowwer_limit = -0.5
+        self.adjust_speed_upper_limit = -0.5
+        # self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar, 0, 0]))
+        # self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar, 0, 0]), None,\
+        #                          (np.array([-0.5,-0.5,-0.5]), np.array([0.5,0.5,0.5])))
+        self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar, 0, 0]), None,\
+                                )
+        print(self.position_pid)
 
     def markerPoseCb(self, msg):
         self.current_marker_poses = msg
@@ -126,9 +139,7 @@ class manipulater:
             flag = 0
             y_threshold_p = 0.018
             y_threshold_n = 0.018
-            x_dis_tar = 0.335
-            flag_r = 0
-            theta = 0.10
+
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
                 if target_marker_pose is None:
@@ -137,71 +148,30 @@ class manipulater:
                 target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
                     target_marker_pose
                 )
+                print("target_pos:", target_pos, "target_angle:", target_angle)
                 cmd_vel = [0.0, 0.0, 0.0]
                 #print(" pose in base",target_pos)
                 
-                # if (target_pos[0] - x_dis_tar) > 0.40:
-                #     cmd_vel[0] = 0.3
-                if (target_pos[0] - x_dis_tar) > 0.30:
-                    cmd_vel[0] = 0.25
-                elif (target_pos[0] - x_dis_tar) > 0.20:
-                    cmd_vel[0] = 0.18
-                elif (target_pos[0] - x_dis_tar) > 0.08:
-                    cmd_vel[0] = 0.13
-                elif (target_pos[0] - x_dis_tar) < -0.08:
-                    cmd_vel[0] = -0.13
-                elif (target_pos[0] - x_dis_tar) > 0.05:
-                    cmd_vel[0] = 0.1
-                elif (target_pos[0] - x_dis_tar) < -0.05:
-                    cmd_vel[0] = -0.1
-                elif (target_pos[0] - x_dis_tar) > 0.02:
-                    cmd_vel[0] = 0.1
-                elif (target_pos[0] - x_dis_tar) < -0.02:
-                    cmd_vel[0] = -0.1
-
-                if (target_pos[1] - 0.0) > 0.035 or (target_pos[1] - 0.0) < -0.035:
-                    cmd_vel[0] = 0.0
-
-                if (target_pos[1] - 0.0) > y_threshold_p:
-                    if flag == 0:
-                        flag = 1
-                        y_threshold_p += 0.01
-                    cmd_vel[1] = 0.11
-                elif (target_pos[1] - 0.0) < -y_threshold_n:
-                    if flag == 0:
-                        flag = 1
-                        y_threshold_n += 0.01
-                    cmd_vel[1] = -0.11
-
-                flag = 1
-                
-                                # if (target_angle - 0.0) > theta:
-                #     if flag_r == 0:
-                #         flag_r = 1
-                #         theta += 0.02
-                #     cmd_vel[2] = -0.2
-                # elif (target_angle - 0.0) < -theta:
-                #     if flag_r == 0:
-                #         flag_r = 1
-                #         theta += 0.02
-                #     cmd_vel[2] = 0.2
-                # flag_r = 1
-                
+                cmd_vel = self.position_pid.__call__(np.array([target_pos[0], target_pos[1], target_angle]))
+                cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
+                cmd_vel[0] = -cmd_vel[0]
+                cmd_vel[1] = -cmd_vel[1]
                 cmd_vel[2] = 0
-                if np.abs(target_pos[0] - x_dis_tar) <= 0.02 and (
+
+                if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
                     (target_pos[1] - 0.0) <= y_threshold_p
                     and (0.0 - target_pos[1]) <= y_threshold_n
                 ):
                     cmd_vel = [0.0, 0.0, 0.0]
                 self.sendBaseVel(cmd_vel)
                 current_time2 = rospy.Time.now()
-                if current_time2.secs - current_time1.secs > 20:#如果微调时间超过20秒
+                if current_time2.secs - current_time1.secs > 10:#如果微调时间超过xx秒
                     rospy.logerr("微调时间过长")
                     self.timeout_pub.publish(True)
                     rospy.sleep(2)
                     return resp
                 self.timeout_pub.publish(False)
-                if np.abs(target_pos[0] - x_dis_tar) <= 0.02 and (
+                if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
                     (target_pos[1] - 0.0) <= y_threshold_p
                     and (0.0 - target_pos[1]) <= y_threshold_n
                 ):
@@ -294,7 +264,7 @@ class manipulater:
 
                 #cmd_vel[2] = 0
                 self.sendBaseVel(cmd_vel)
-                if np.abs(target_pos[0] - x_dis_tar) <= 0.02 and (
+                if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
                     (target_pos[1] - 0.0) <= y_threshold_p
                     and (0.0 - target_pos[1]) <= y_threshold_n 
                     and(target_angle - 0.0) < theta
@@ -394,7 +364,7 @@ class manipulater:
 
                 #cmd_vel[2] = 0
                 self.sendBaseVel(cmd_vel)
-                if np.abs(target_pos[0] - x_dis_tar) <= 0.02 and (
+                if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
                     (target_pos[1] - 0.0) <= y_threshold_p
                     and (0.0 - target_pos[1]) <= y_threshold_n
                     and(target_angle - 0.0) < theta
