@@ -26,13 +26,13 @@ TebLocalPlannerROS:
 #*******************************************************************************
 # Robot
 #*******************************************************************************
-  max_vel_x: 0.5             #最大x前向速度
-  max_vel_x_backwards: 0.5 #最大x后退速度
-  max_vel_y: 0.5             #最大y方向速度
-  max_vel_theta: 0.5        #最大转向角速度
-  acc_lim_x: 3.0            #最大x加速度
-  acc_lim_y: 3.0            #最大x加速度
-  acc_lim_theta: 3.0        #最大角加速度
+  max_vel_x: 1.0             #最大x前向速度
+  max_vel_x_backwards: 1.0 #最大x后退速度
+  max_vel_y: 1.0             #最大y方向速度
+  max_vel_theta: 1.0        #最大转向角速度
+  acc_lim_x: 6.0            #最大x加速度
+  acc_lim_y: 6.0            #最大x加速度
+  acc_lim_theta: 6.0        #最大角加速度
   max_vel_trans: 1.0
   is_footprint_dynamic: False
   
@@ -62,7 +62,7 @@ TebLocalPlannerROS:
   
   # 不是True会震荡
   free_goal_vel: True
-  complete_global_plan: False
+  complete_global_plan: True
 
 #*******************************************************************************
 # Obstacles
@@ -74,7 +74,7 @@ TebLocalPlannerROS:
   obstacle_poses_affected: 10                 #障碍物姿态受影响程度0-30
   costmap_converter_plugin: "point"
   costmap_converter_spin_thread: True
-  costmap_converter_rate: 5
+  costmap_converter_rate: 3
 
   dynamic_obstacle_inflation_dist: 0.0      #动态障碍物的膨胀范围
   include_dynamic_obstacles: False          #是否将动态障碍物预测为速度模型
@@ -87,16 +87,16 @@ TebLocalPlannerROS:
   optimization_verbose: False    #打印优化过程详情
   penalty_epsilon: 0.1           #对于硬约束近似，在惩罚函数中添加安全范围
   obstacle_cost_exponent: 4
-  weight_max_vel_x: 0.2            #最大x速度权重 0~2
-  weight_max_vel_y: 0.2
-  weight_max_vel_theta: 0.2        #最大角速度权重 0~1
+  weight_max_vel_x: 1.0           #最大x速度权重 0~2
+  weight_max_vel_y: 1.0
+  weight_max_vel_theta: 1.0        #最大角速度权重 0~1
   weight_acc_lim_x: 1            #最大x 加速度权重 0~1
   weight_acc_lim_y: 1
   weight_acc_lim_theta: 1        #最大角速度权重 0~1
   weight_kinematics_nh: 0.01     #非完整运动学的优化权重
   weight_kinematics_forward_drive: 0.1     #优化过程中，迫使机器人只选择前进方向，差速轮适用
   weight_kinematics_turning_radius: 0.1    #优化过程中，车型机器人的最小转弯半径的权重
-  weight_optimaltime: 0.6 # must be > 0  #优化过程中，基于轨迹的时间上的权重
+  weight_optimaltime: 1.0 # must be > 0  #优化过程中，基于轨迹的时间上的权重
   weight_shortest_path: 0
   weight_obstacle: 20           #优化过程中，和障碍物最小距离的权重 0~50
   weight_inflation: 0.6          #优化过程中， 膨胀区的权重

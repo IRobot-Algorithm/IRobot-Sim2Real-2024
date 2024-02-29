@@ -293,13 +293,26 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   double dx = global_goal.pose.position.x - robot_pose_.x();
   double dy = global_goal.pose.position.y - robot_pose_.y();
   double delta_orient = g2o::normalize_theta( tf2::getYaw(global_goal.pose.orientation) - robot_pose_.theta() );
-  if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_.goal_tolerance.xy_goal_tolerance
+  double dis = fabs(std::sqrt(dx*dx+dy*dy));
+  if(dis < cfg_.goal_tolerance.xy_goal_tolerance
     && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance
     && (!cfg_.goal_tolerance.complete_global_plan || via_points_.size() == 0)
     && (base_local_planner::stopped(base_odom, cfg_.goal_tolerance.theta_stopped_vel, cfg_.goal_tolerance.trans_stopped_vel)
         || cfg_.goal_tolerance.free_goal_vel))
   {
     goal_reached_ = true;
+    return mbf_msgs::ExePathResult::SUCCESS;
+  }
+
+  if (dis < 0.3)
+  {
+    Eigen::Vector2d v(cos(robot_pose_.theta()) * dx + sin(robot_pose_.theta()) * dy,
+                    - sin(robot_pose_.theta()) * dx + cos(robot_pose_.theta()) * dy);
+    cmd_vel.twist.linear.x = v(0)/v.norm() * dis * 3;
+    cmd_vel.twist.linear.y = v(1)/v.norm() * dis * 3;
+    cmd_vel.twist.angular.z = delta_orient * 3;
+
+    last_cmd_ = cmd_vel.twist;
     return mbf_msgs::ExePathResult::SUCCESS;
   }
 

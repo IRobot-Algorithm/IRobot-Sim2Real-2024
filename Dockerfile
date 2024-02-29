@@ -38,7 +38,7 @@ RUN echo "source /opt/ep_ws/devel/setup.bash" >> ~/.bashrc
 RUN chmod +x /opt/start.sh
 RUN chmod +x /opt/ep_ws/src/rmus_solution/scripts/*
 
-CMD chmod +x /opt/ep_ws/src/rmus_solution/scripts/*; /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh /opt/start.sh
+# CMD chmod +x /opt/ep_ws/src/rmus_solution/scripts/*; /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh /opt/start.sh
 
 # navigation
-# CMD source /opt/workspace/devel_isolated/setup.bash && catkin_make install --use-ninja -DSETUPTOOLS_DEB_LAYOUT=OFF; /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh /opt/start.sh
+CMD source /opt/workspace/devel_isolated/setup.bash && catkin_make install --use-ninja -DSETUPTOOLS_DEB_LAYOUT=OFF; /opt/ros/noetic/env.sh /opt/ep_ws/devel/env.sh /opt/start.sh
