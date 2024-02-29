@@ -181,12 +181,12 @@ class manipulater:
                 if self.yaw_prepared != True and self.y_prepared == True:
                     cmd_vel[0] = 0
                     cmd_vel[1] = 0                
-                    print("preparing yaw...")
+                    #print("preparing yaw...")
 
                 if self.x_prepared != True and self.y_prepared == True and self.yaw_prepared == True:
                     cmd_vel[1] = 0
                     cmd_vel[2] = 0                
-                    print("preparing x axis...")
+                    #print("preparing x axis...")
                     
                 if np.abs(target_pos[0] - self.x_dis_tar_1) <= self.x_threshold:
                     self.x_prepared = True
@@ -279,12 +279,12 @@ class manipulater:
                 if self.yaw_prepared != True and self.y_prepared == True:
                     cmd_vel[0] = 0
                     cmd_vel[1] = 0                
-                    print("preparing yaw...")
+                    #print("preparing yaw...")
 
                 if self.x_prepared != True and self.y_prepared == True and self.yaw_prepared == True:
                     cmd_vel[1] = 0
                     cmd_vel[2] = 0                
-                    print("preparing x axis...")
+                    #print("preparing x axis...")
 
                 if np.abs(target_pos[0] - self.x_dis_tar_2) <= self.x_threshold:
                     self.x_prepared = True
