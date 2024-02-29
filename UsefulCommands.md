@@ -1,6 +1,6 @@
 scripts/shell.sh
 rostopic echo /judgement/exchange_markers
-rostopic echo /judgement/markers_time
+scripts/shell.sh rostopic echo /judgement/markers_time
 scripts/shell.sh rostopic echo /all_detect_ID
 scripts/shell.sh rostopic echo /get_blockinfo
 scripts/shell.sh rostopic echo /cmd_vel

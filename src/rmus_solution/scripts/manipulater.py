@@ -44,11 +44,12 @@ class manipulater:
         self.ki = 0.4
         self.kd = 0.0
         self.x_dis_tar_1 = 0.335
-        self.x_dis_tar_2 = 0.385
-        self.x_dis_tar_3 = 0.385
+        self.x_dis_tar_2 = 0.395
+        self.x_dis_tar_3 = 0.395 #self.x_dis_tar_3 should equals to self.x_dis_tar_2
+        self.x_threshold = 0.02
         self.y_threshold_p = 0.018
         self.y_threshold_n = 0.018
-        self.yaw_threshold = 0.01
+        self.yaw_threshold = 0.1
         self.adjust_speed_lowwer_limit = -0.5
         self.adjust_speed_upper_limit = 0.5
         self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_1, 0, 0]), None)
@@ -160,19 +161,34 @@ class manipulater:
                 cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
                 cmd_vel[0] = -cmd_vel[0]
                 cmd_vel[1] = -cmd_vel[1]
-                cmd_vel[2] = 0
+                # cmd_vel[2] = 0
+
+                # if self.y_prepared != True:
+                #     cmd_vel[0] = 0
+                #     cmd_vel[2] = 0
+                #     print("preparing y axis...")
+
+                # if self.x_prepared != True and self.y_prepared == True:
+                #     cmd_vel[1] = 0
+                #     cmd_vel[2] = 0                
+                #     print("preparing x axis...")
 
                 if self.y_prepared != True:
                     cmd_vel[0] = 0
                     cmd_vel[2] = 0
                     print("preparing y axis...")
 
-                if self.x_prepared != True and self.y_prepared == True:
+                if self.yaw_prepared != True and self.y_prepared == True:
+                    cmd_vel[0] = 0
+                    cmd_vel[1] = 0                
+                    print("preparing yaw...")
+
+                if self.x_prepared != True and self.y_prepared == True and self.yaw_prepared == True:
                     cmd_vel[1] = 0
                     cmd_vel[2] = 0                
                     print("preparing x axis...")
-
-                if np.abs(target_pos[0] - self.x_dis_tar_1) <= 0.02:
+                    
+                if np.abs(target_pos[0] - self.x_dis_tar_1) <= self.x_threshold:
                     self.x_prepared = True
                 else :
                     self.x_prepared = False
@@ -181,10 +197,15 @@ class manipulater:
                     self.y_prepared = True
                 else :
                     self.y_prepared = False
-                
+
+                if np.abs(target_angle - 0) <= self.yaw_threshold:
+                    self.yaw_prepared = True
+                else :
+                    self.yaw_prepared = False
+
                 self.sendBaseVel(cmd_vel)
                 
-                if self.x_prepared == True and self.y_prepared == True:
+                if self.x_prepared == True and self.y_prepared == True and self.yaw_prepared:
                     cmd_vel = [0.0, 0.0, 0.0]
                     pose = Pose()
                     pose.position.x = 0.19
@@ -248,7 +269,7 @@ class manipulater:
                 cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
                 cmd_vel[0] = -cmd_vel[0]
                 cmd_vel[1] = -cmd_vel[1]
-                cmd_vel[2] = 0
+                # cmd_vel[2] = 0
 
                 if self.y_prepared != True:
                     cmd_vel[0] = 0
@@ -265,7 +286,7 @@ class manipulater:
                     cmd_vel[2] = 0                
                     print("preparing x axis...")
 
-                if np.abs(target_pos[0] - self.x_dis_tar_2) <= 0.02:
+                if np.abs(target_pos[0] - self.x_dis_tar_2) <= self.x_threshold:
                     self.x_prepared = True
                 else :
                     self.x_prepared = False
@@ -275,32 +296,14 @@ class manipulater:
                 else :
                     self.y_prepared = False
 
-                if np.abs(target_angle - 0) <= 0.1:
+                if np.abs(target_angle - 0) <= self.yaw_threshold:
                     self.yaw_prepared = True
                 else :
                     self.yaw_prepared = False
 
                 self.sendBaseVel(cmd_vel)
-                # if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
-                #     (target_pos[1] - 0.0) <= self.y_threshold_p
-                #     and (0.0 - target_pos[1]) <= self.y_threshold_n 
-                #     and(target_angle - 0.0) < theta
-                #     and(target_angle - 0.0) > -theta
-                # ):
-                #     rospy.loginfo("Trim well in the all dimention, going open loop")
-                #     self.sendBaseVel([0.0, 0.0, 0.0])
-                #     rospy.sleep(1.0)
-                #     self.sendBaseVel([0.25, 0.0, 0.0])
-                #     rospy.sleep(0.3)
-                #     self.sendBaseVel([0.25, 0.0, 0.0])
-                #     rospy.sleep(0.3)
-                #     self.sendBaseVel([0.0, 0.0, 0.0])
-                #     rospy.loginfo("Place: reach the goal for placing.")
-                #     break
-                # rate.sleep()
 
-                # 还差yaw的prepared
-                if self.x_prepared == True and self.y_prepared == True:
+                if self.x_prepared == True and self.y_prepared == True and self.yaw_prepared == True:
                     rospy.loginfo("Trim well in the all dimention, going open loop")
                     self.sendBaseVel([0.0, 0.0, 0.0])
                     rospy.sleep(1.0)
@@ -343,10 +346,6 @@ class manipulater:
             self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_3, 0, 0]), None)
             
             self.pre2()
-            flag = 0
-            x_dis_tar = 0.351
-            flag_r = 0
-            theta = 0.10
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
@@ -358,50 +357,45 @@ class manipulater:
                 )
                 cmd_vel = [0.0, 0.0, 0.0]
 
-                if (target_pos[0] - x_dis_tar) > 0.1:
-                    cmd_vel[0] = 0.14
-                elif (target_pos[0] - x_dis_tar) < -0.1:
-                    cmd_vel[0] = -0.14
-                elif (target_pos[0] - x_dis_tar) > 0.02:
-                    cmd_vel[0] = 0.12
-                elif (target_pos[0] - x_dis_tar) < -0.02:
-                    cmd_vel[0] = -0.12
+                cmd_vel = self.position_pid.__call__(np.array([target_pos[0], target_pos[1], target_angle]))
+                cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
+                cmd_vel[0] = -cmd_vel[0]
+                cmd_vel[1] = -cmd_vel[1]
+                # cmd_vel[2] = 0
 
-                if (target_pos[1] - 0.0) > 0.05 or (target_pos[1] - 0.0) < -0.05:
-                    cmd_vel[0] = 0.0
+                if self.y_prepared != True:
+                    cmd_vel[0] = 0
+                    cmd_vel[2] = 0
+                    print("preparing y axis...")
 
-                if (target_pos[1] - 0.0) > self.y_threshold_p:
-                    if flag == 0:
-                        flag = 1
-                        self.y_threshold_p += 0.01
-                    cmd_vel[1] = 0.11
-                elif (target_pos[1] - 0.0) < -self.y_threshold_n:
-                    if flag == 0:
-                        flag = 1
-                        self.y_threshold_n += 0.01
-                    cmd_vel[1] = -0.11
-                flag = 1
+                if self.yaw_prepared != True and self.y_prepared == True:
+                    cmd_vel[0] = 0
+                    cmd_vel[1] = 0                
+                    print("preparing yaw...")
+
+                if self.x_prepared != True and self.y_prepared == True and self.yaw_prepared == True:
+                    cmd_vel[1] = 0
+                    cmd_vel[2] = 0                
+                    print("preparing x axis...")
+
+                if np.abs(target_pos[0] - self.x_dis_tar_2) <= self.x_threshold:
+                    self.x_prepared = True
+                else :
+                    self.x_prepared = False
                 
-                if (target_angle - 0.0) > theta:
-                    if flag_r == 0:
-                        flag_r = 1
-                        theta += 0.02
-                    cmd_vel[2] = -0.2
-                elif (target_angle - 0.0) < -theta:
-                    if flag_r == 0:
-                        flag_r = 1
-                        theta += 0.02
-                    cmd_vel[2] = 0.2
-                flag_r = 1
+                if (target_pos[1] - 0.0) <= self.y_threshold_p and (0.0 - target_pos[1]) <= self.y_threshold_n:
+                    self.y_prepared = True
+                else :
+                    self.y_prepared = False
 
-                #cmd_vel[2] = 0
+                if np.abs(target_angle - 0) <= self.yaw_threshold:
+                    self.yaw_prepared = True
+                else :
+                    self.yaw_prepared = False
+
                 self.sendBaseVel(cmd_vel)
-                if np.abs(target_pos[0] - self.x_dis_tar_3) <= 0.02 and (
-                    (target_pos[1] - 0.0) <= self.y_threshold_p
-                    and (0.0 - target_pos[1]) <= self.y_threshold_n
-                    and(target_angle - 0.0) < theta
-                    and(target_angle - 0.0) > -theta
-                ):
+
+                if self.x_prepared == True and self.y_prepared == True and self.yaw_prepared == True:
                     rospy.loginfo("Trim well in the all dimention, going open loop")
                     self.sendBaseVel([0.0, 0.0, 0.0])
                     rospy.sleep(1.0)
@@ -413,7 +407,6 @@ class manipulater:
                     rospy.loginfo("Place: reach the goal for placing.")
                     break
                 rate.sleep()
-
             
             rospy.loginfo("Trim well in the horizon dimention")
 
