@@ -141,10 +141,6 @@ class manipulater:
 
             self.open_gripper()
             rospy.sleep(0.1)
-            adjust_time = 0.1
-
-            flag = 0
-
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
@@ -159,18 +155,20 @@ class manipulater:
                 
                 cmd_vel = self.position_pid.__call__(np.array([target_pos[0], target_pos[1], target_angle]))
                 cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
+                cmd_vel[0] = -cmd_vel[0]
+                cmd_vel[1] = -cmd_vel[1]
+                cmd_vel[2] = 0
+
                 if self.y_prepared != True:
                     cmd_vel[0] = 0
                     cmd_vel[2] = 0
+                    print("preparing y axis...")
 
                 if self.x_prepared != True and self.y_prepared == True:
                     cmd_vel[1] = 0
                     cmd_vel[2] = 0                
+                    print("preparing x axis...")
                     
-                # cmd_vel[0] = -cmd_vel[0]
-                # cmd_vel[1] = -cmd_vel[1]
-                # cmd_vel[2] = 0
-                # print("cmd_vel:", cmd_vel)
 
                 # if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
                 #     (target_pos[1] - 0.0) <= self.y_threshold_p
@@ -203,8 +201,6 @@ class manipulater:
                     rospy.loginfo("Place: reach the goal for placing.")
                     break
 
-
-                
                 current_time2 = rospy.Time.now()
                 if current_time2.secs - current_time1.secs > 10:#如果微调时间超过xx秒
                     rospy.logerr("微调时间过长")
@@ -212,7 +208,7 @@ class manipulater:
                     rospy.sleep(2)
                     return resp
                 self.timeout_pub.publish(False)
-                
+
                 # if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
                 #     (target_pos[1] - 0.0) <= self.y_threshold_p
                 #     and (0.0 - target_pos[1]) <= self.y_threshold_n
@@ -250,7 +246,6 @@ class manipulater:
             rospy.loginfo("First trim then place")
 
             self.pre()
-            flag = 0
             theta = 0.10
 
             while not rospy.is_shutdown():
@@ -269,13 +264,37 @@ class manipulater:
                 cmd_vel[1] = -cmd_vel[1]
                 cmd_vel[2] = 0
 
+                if self.y_prepared != True:
+                    cmd_vel[0] = 0
+                    cmd_vel[2] = 0
+                    print("preparing y axis...")
+
+                if self.x_prepared != True and self.y_prepared == True:
+                    cmd_vel[1] = 0
+                    cmd_vel[2] = 0                
+                    print("preparing x axis...")
+
                 self.sendBaseVel(cmd_vel)
-                if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
-                    (target_pos[1] - 0.0) <= self.y_threshold_p
-                    and (0.0 - target_pos[1]) <= self.y_threshold_n 
-                    and(target_angle - 0.0) < theta
-                    and(target_angle - 0.0) > -theta
-                ):
+                # if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
+                #     (target_pos[1] - 0.0) <= self.y_threshold_p
+                #     and (0.0 - target_pos[1]) <= self.y_threshold_n 
+                #     and(target_angle - 0.0) < theta
+                #     and(target_angle - 0.0) > -theta
+                # ):
+                #     rospy.loginfo("Trim well in the all dimention, going open loop")
+                #     self.sendBaseVel([0.0, 0.0, 0.0])
+                #     rospy.sleep(1.0)
+                #     self.sendBaseVel([0.25, 0.0, 0.0])
+                #     rospy.sleep(0.3)
+                #     self.sendBaseVel([0.25, 0.0, 0.0])
+                #     rospy.sleep(0.3)
+                #     self.sendBaseVel([0.0, 0.0, 0.0])
+                #     rospy.loginfo("Place: reach the goal for placing.")
+                #     break
+                # rate.sleep()
+
+                # 还差yaw的prepared
+                if self.x_prepared == True and self.y_prepared == True:
                     rospy.loginfo("Trim well in the all dimention, going open loop")
                     self.sendBaseVel([0.0, 0.0, 0.0])
                     rospy.sleep(1.0)
@@ -288,7 +307,6 @@ class manipulater:
                     break
                 rate.sleep()
 
-            
             rospy.loginfo("Trim well in the horizon dimention")
 
             
