@@ -61,7 +61,7 @@ TebLocalPlannerROS:
   yaw_goal_tolerance: 0.05   #目标 角度 偏移容忍度
   
   # 不是True会震荡
-  free_goal_vel: True
+  free_goal_vel: False
   complete_global_plan: True
 
 #*******************************************************************************
