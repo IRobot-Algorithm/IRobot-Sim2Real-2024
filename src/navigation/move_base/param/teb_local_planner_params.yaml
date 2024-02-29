@@ -62,7 +62,7 @@ TebLocalPlannerROS:
   
   # 不是True会震荡
   free_goal_vel: True
-  complete_global_plan: True
+  complete_global_plan: False
 
 #*******************************************************************************
 # Obstacles

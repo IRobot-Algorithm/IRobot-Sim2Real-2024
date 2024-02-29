@@ -40,24 +40,23 @@ class manipulater:
             "/let_manipulater_work", graspsignal, self.trimerworkCallback
         )
 
-        self.kp = 1.0
-        self.ki = 0.1
+        self.kp = 5.0
+        self.ki = 0.4
         self.kd = 0.0
-        self.x_dis_tar = 0.335
+        self.x_dis_tar_1 = 0.335
+        self.x_dis_tar_2 = 0.385
+        self.x_dis_tar_3 = 0.385
         self.y_threshold_p = 0.018
         self.y_threshold_n = 0.018
-        self.adjust_speed_lowwer_limit = -0.1
-        self.adjust_speed_upper_limit = 0.1
-        
-        # self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar, 0, 0]))
-        # self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar, 0, 0]), None,\
-        #                          (np.array([-0.5,-0.5,-0.5]), np.array([0.5,0.5,0.5])))
-        self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar, 0, 0]), None,\
-                                )
+        self.yaw_threshold = 0.01
+        self.adjust_speed_lowwer_limit = -0.5
+        self.adjust_speed_upper_limit = 0.5
+        self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_1, 0, 0]), None)
         print(self.position_pid)
 
         self.x_prepared = False
         self.y_prepared = False
+        self.yaw_prepared = False
 
 
     def markerPoseCb(self, msg):
@@ -93,7 +92,7 @@ class manipulater:
             ]
         )
         angle = sciR.from_quat(quat).as_euler("YXZ")[0]
-
+        print("target_pos:", pos, "target_angle:", angle)
         return pos, angle
 
     def sendBaseVel(self, vel):
@@ -144,6 +143,7 @@ class manipulater:
 
             self.x_prepared = False
             self.y_prepared = False
+            self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_1, 0, 0]), None)
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
@@ -153,7 +153,7 @@ class manipulater:
                 target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
                     target_marker_pose
                 )
-                print("target_pos:", target_pos, "target_angle:", target_angle)
+                # print("target_pos:", target_pos, "target_angle:", target_angle)
                 cmd_vel = [0.0, 0.0, 0.0]
                 
                 cmd_vel = self.position_pid.__call__(np.array([target_pos[0], target_pos[1], target_angle]))
@@ -171,14 +171,8 @@ class manipulater:
                     cmd_vel[1] = 0
                     cmd_vel[2] = 0                
                     print("preparing x axis...")
-                    
 
-                # if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
-                #     (target_pos[1] - 0.0) <= self.y_threshold_p
-                #     and (0.0 - target_pos[1]) <= self.y_threshold_n
-                # ):
-                #     cmd_vel = [0.0, 0.0, 0.0]
-                if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02:
+                if np.abs(target_pos[0] - self.x_dis_tar_1) <= 0.02:
                     self.x_prepared = True
                 else :
                     self.x_prepared = False
@@ -212,21 +206,6 @@ class manipulater:
                     return resp
                 self.timeout_pub.publish(False)
 
-                # if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
-                #     (target_pos[1] - 0.0) <= self.y_threshold_p
-                #     and (0.0 - target_pos[1]) <= self.y_threshold_n
-                # ):
-                #     pose = Pose()
-                #     pose.position.x = 0.19
-                #     pose.position.y = -0.08
-                #     self.sendBaseVel([0.25, 0.0, 0.0])
-                #     rospy.sleep(0.3)
-                #     self.sendBaseVel([0.0, 0.0, 0.0])
-                #     rospy.sleep(1.0)
-                #     self.arm_position_pub.publish(pose)
-                #     rospy.sleep(1.0)
-                #     rospy.loginfo("Place: reach the goal for placing.")
-                #     break
                 rate.sleep()
 
             target_marker_pose = self.current_marker_poses
@@ -250,6 +229,7 @@ class manipulater:
 
             self.x_prepared = False
             self.y_prepared = False
+            self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_2, 0, 0]), None)
 
             self.pre()
             theta = 0.10
@@ -275,12 +255,17 @@ class manipulater:
                     cmd_vel[2] = 0
                     print("preparing y axis...")
 
-                if self.x_prepared != True and self.y_prepared == True:
+                if self.yaw_prepared != True and self.y_prepared == True:
+                    cmd_vel[0] = 0
+                    cmd_vel[1] = 0                
+                    print("preparing yaw...")
+
+                if self.x_prepared != True and self.y_prepared == True and self.yaw_prepared == True:
                     cmd_vel[1] = 0
                     cmd_vel[2] = 0                
                     print("preparing x axis...")
 
-                if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02:
+                if np.abs(target_pos[0] - self.x_dis_tar_2) <= 0.02:
                     self.x_prepared = True
                 else :
                     self.x_prepared = False
@@ -289,7 +274,12 @@ class manipulater:
                     self.y_prepared = True
                 else :
                     self.y_prepared = False
-                    
+
+                if np.abs(target_angle - 0) <= 0.1:
+                    self.yaw_prepared = True
+                else :
+                    self.yaw_prepared = False
+
                 self.sendBaseVel(cmd_vel)
                 # if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
                 #     (target_pos[1] - 0.0) <= self.y_threshold_p
@@ -350,6 +340,7 @@ class manipulater:
             
             self.x_prepared = False
             self.y_prepared = False
+            self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_3, 0, 0]), None)
             
             self.pre2()
             flag = 0
@@ -405,7 +396,7 @@ class manipulater:
 
                 #cmd_vel[2] = 0
                 self.sendBaseVel(cmd_vel)
-                if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
+                if np.abs(target_pos[0] - self.x_dis_tar_3) <= 0.02 and (
                     (target_pos[1] - 0.0) <= self.y_threshold_p
                     and (0.0 - target_pos[1]) <= self.y_threshold_n
                     and(target_angle - 0.0) < theta
