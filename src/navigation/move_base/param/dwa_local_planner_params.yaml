@@ -34,7 +34,7 @@ DWAPlannerROS:
   # Trajectory Scoring Parameters
   path_distance_bias: 35.0      # 32.0   - weighting for how much it should stick to the global path plan
   # 衡量控制器遵循给定路径的一致程度的加权值
-  goal_distance_bias: 20.0      # 24.0   - wighting for how much it should attempt to reach its goal
+  goal_distance_bias: 24.0      # 24.0   - wighting for how much it should attempt to reach its goal
   # 判断是否接近目标地点和控制速度的加权值
   occdist_scale: 10.0           # 0.01   - weighting for how much the controller should avoid obstacles
   # 有关避障的加权值 
