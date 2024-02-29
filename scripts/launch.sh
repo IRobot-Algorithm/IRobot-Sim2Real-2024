@@ -1,6 +1,6 @@
 #!/bin/bash
 SERVER_IMAGE=${SERVER_IMAGE:-rmus2022/server:result_pub_fix}
-CLIENT_IMAGE=${CLIENT_IMAGE:-client-custom:lastest} # Just for test, if not effect, please change it to your client docker image. 
+CLIENT_IMAGE=${CLIENT_IMAGE:-client-custom:latest} # Just for test, if not effect, please change it to your client docker image. 
 # SERVER_IMAGE=${SERVER_IMAGE:-rmus2022/server:v1.0.0}
 # CLIENT_IMAGE=${CLIENT_IMAGE:-client-custom:latest}
 CLI_EXE=$@
