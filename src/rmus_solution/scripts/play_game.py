@@ -12,9 +12,9 @@ from std_msgs.msg import Bool
 timeout = False
 
 class block:
-    def __init__(self, ID,  placement , location = -1, mode = -1):#矿石ID、放到哪里,哪个矿区(-1为不知道 ),放置模式
+    def __init__(self, ID,  placement , area = -1, mode = -1):#矿石ID、放到哪里,哪个矿区(-1为不知道 ),放置模式
         self.ID = ID
-        self.location = location
+        self.area = area
         self.mode = mode
         self.placement = placement
         self.is_set = 0#是否已经被放好了
@@ -28,9 +28,16 @@ class robot:
 def set_timeout(data):
     global timeout 
     timeout = data
-    
+
+def tell_go_park_hard():
+    # if rospy.Time.now().to_sec() - game_begin_time < 20:
+    if 300 - (rospy.Time.now().to_sec() - game_begin_time) < 20:
+        print("距离游戏结束还有:",rospy.Time.now().to_sec() - game_begin_time,"将回到初始区")
+        go_to(5)
+        rospy.sleep(2000)
 
 def catch():
+    tell_go_park_hard()
     trimer(1,"")
     global timeout
     if timeout.data == True:
@@ -43,6 +50,7 @@ def tell_is_here(block_id):#判断此方块在没在这里
     return block_id in blockinfo.data
 
 def grip():
+    tell_go_park_hard()
     for i in range(1,7):
         if blocks[i].mode != -1 and tell_is_here(i):
             print("这里有目标方块"+ str(i))
@@ -78,7 +86,7 @@ def go_to_another_side(location):#去当前矿区的另一侧
 def put():
     if blocks[my_robot.block].mode == 1:
         address_name = ['B','O','X']
-        navigation(6+blocks[my_robot.block].placement, "")
+        go_to(6+blocks[my_robot.block].placement)
         rospy.loginfo("到达兑换站"+address_name[blocks[my_robot.block].placement])#输出到达了兑换站 
         img_switch_mode(7+blocks[my_robot.block].placement)
         rospy.sleep(0.5)
@@ -86,7 +94,7 @@ def put():
         blocks[my_robot.block].is_set = 1
     if blocks[my_robot.block].mode == 2:
         address_name = ['B','O','X']
-        navigation(6+blocks[my_robot.block].placement, "")
+        go_to(6+blocks[my_robot.block].placement)
         rospy.loginfo("到达兑换站"+address_name[blocks[my_robot.block].placement])#输出到达了兑换站 
         img_switch_mode(7+blocks[my_robot.block].placement)
         rospy.sleep(0.5)
@@ -96,11 +104,12 @@ def put():
 def update_block_location(area, block_place_information):#更新矿石的位置信息
     for i in range(1,7):
         if i in block_place_information and blocks[i].is_set == 0:
-            blocks[i].location = area
+            blocks[i].area = area
             #print("blocks["+str(i)+"].location="+str(blocks[i].location))
 
 def remove_block_information(block_id):
-    blocks[block_id].location = -1#已抓取成功
+    remove_area_information(block_id)
+    blocks[block_id].area = -1#已抓取成功
 
 def add_area_information(area):#添加当前画面识别到的所有矿石
     img_switch_mode(11)
@@ -109,12 +118,24 @@ def add_area_information(area):#添加当前画面识别到的所有矿石
     block_place_information[area].update(blockinfo.data)
     update_block_location(area+1, block_place_information[area])
 
+def remove_area_information(block_id):
+    block_place_information[blocks[block_id].area].discard(block_id)
+
 
 def go_to(location):#仅仅是去那里
+    if location != 5:
+        tell_go_park_hard()
     navigation(location, "")
     my_robot.location = location
     
+def there_are_blocks(area):#判断此处有没有方块
+    if len(block_place_information[area]) == 0:
+        return False
+    return True
+
 def detect_area(area):#对指定矿区进行一次抓取、放置的全过程。若抓取失败，则返回false
+    if there_are_blocks(area) == False:
+        return False
     location = area*10 + 1
     go_to(location)
     img_switch_mode(11)#此模式，便于识别ID以加入到集合里 
@@ -133,14 +154,14 @@ def detect_area(area):#对指定矿区进行一次抓取、放置的全过程。
     
 
 def grip_specified_block(block):
-    go_to(block.location*10+1)
+    go_to(block.area*10+1)
     img_switch_mode(11)#此模式，便于识别ID以加入到集合里 
 
-    add_area_information(block.location)
+    add_area_information(block.area)
 
     result = grip()
     if result == False and (my_robot.location == 11 or my_robot.location == 21 or my_robot.location == 31):
-        go_to_another_side(block.location*10+1)
+        go_to_another_side(block.area*10+1)
         if grip():
             put()
             return True
@@ -149,7 +170,8 @@ def grip_specified_block(block):
         return True
     else:
         return False
-    
+
+
 def update_rest_block(mode):
     sum = 0
     for i in range(1,7):
@@ -197,7 +219,7 @@ if __name__ == '__main__':
 
     my_robot = robot()
 
-    navigation(9, "")
+    go_to(9)
 
     gameinfo = rospy.wait_for_message("/get_gameinfo", UInt8MultiArray, timeout=7)
 
@@ -221,7 +243,7 @@ if __name__ == '__main__':
 
     while rest_block > 0:
         for i in range(1, 7):
-            if blocks[i].mode == 1 and blocks[i].location != -1:
+            if blocks[i].mode == 1 and blocks[i].area != -1:
                 grip_specified_block(blocks[i])
 
         rest_block = update_rest_block(1)
@@ -252,7 +274,7 @@ if __name__ == '__main__':
     rest_block = 3
     while rest_block > 0:
         for i in range(1, 7):
-            if blocks[i].mode == 2 and blocks[i].location != -1:
+            if blocks[i].mode == 2 and blocks[i].area != -1:
                 grip_specified_block(blocks[i])
 
         rest_block = update_rest_block(2)
@@ -268,14 +290,14 @@ if __name__ == '__main__':
         if rest_block > 0:
             detect_area(3)
         rest_block = update_rest_block(2)
-    
+
     rest_block = 0
 
                 
 
 
 
-    navigation_result = navigation(5, "")
+    navigation_result = go_to(5)
 
 
 
