@@ -93,7 +93,7 @@ class manipulater:
             ]
         )
         angle = sciR.from_quat(quat).as_euler("YXZ")[0]
-        print("target_pos:", pos, "target_angle:", angle)
+        #print("target_pos:", pos, "target_angle:", angle)
         return pos, angle
 
     def sendBaseVel(self, vel):
@@ -176,7 +176,7 @@ class manipulater:
                 if self.y_prepared != True:
                     cmd_vel[0] = 0
                     cmd_vel[2] = 0
-                    print("preparing y axis...")
+                    #print("preparing y axis...")
 
                 if self.yaw_prepared != True and self.y_prepared == True:
                     cmd_vel[0] = 0
@@ -274,7 +274,7 @@ class manipulater:
                 if self.y_prepared != True:
                     cmd_vel[0] = 0
                     cmd_vel[2] = 0
-                    print("preparing y axis...")
+                    #print("preparing y axis...")
 
                 if self.yaw_prepared != True and self.y_prepared == True:
                     cmd_vel[0] = 0
@@ -366,17 +366,17 @@ class manipulater:
                 if self.y_prepared != True:
                     cmd_vel[0] = 0
                     cmd_vel[2] = 0
-                    print("preparing y axis...")
+                    #print("preparing y axis...")
 
                 if self.yaw_prepared != True and self.y_prepared == True:
                     cmd_vel[0] = 0
                     cmd_vel[1] = 0                
-                    print("preparing yaw...")
+                    #print("preparing yaw...")
 
                 if self.x_prepared != True and self.y_prepared == True and self.yaw_prepared == True:
                     cmd_vel[1] = 0
                     cmd_vel[2] = 0                
-                    print("preparing x axis...")
+                    #print("preparing x axis...")
 
                 if np.abs(target_pos[0] - self.x_dis_tar_2) <= self.x_threshold:
                     self.x_prepared = True
