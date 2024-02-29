@@ -142,6 +142,9 @@ class manipulater:
             self.open_gripper()
             rospy.sleep(0.1)
 
+            self.x_prepared = False
+            self.y_prepared = False
+
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
                 if target_marker_pose is None:
@@ -245,6 +248,9 @@ class manipulater:
         elif req.mode == 2:
             rospy.loginfo("First trim then place")
 
+            self.x_prepared = False
+            self.y_prepared = False
+
             self.pre()
             theta = 0.10
 
@@ -274,6 +280,16 @@ class manipulater:
                     cmd_vel[2] = 0                
                     print("preparing x axis...")
 
+                if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02:
+                    self.x_prepared = True
+                else :
+                    self.x_prepared = False
+                
+                if (target_pos[1] - 0.0) <= self.y_threshold_p and (0.0 - target_pos[1]) <= self.y_threshold_n:
+                    self.y_prepared = True
+                else :
+                    self.y_prepared = False
+                    
                 self.sendBaseVel(cmd_vel)
                 # if np.abs(target_pos[0] - self.x_dis_tar) <= 0.02 and (
                 #     (target_pos[1] - 0.0) <= self.y_threshold_p
@@ -331,7 +347,10 @@ class manipulater:
     
         elif req.mode == 3:
             rospy.loginfo("First trim then place")
-
+            
+            self.x_prepared = False
+            self.y_prepared = False
+            
             self.pre2()
             flag = 0
             x_dis_tar = 0.351
