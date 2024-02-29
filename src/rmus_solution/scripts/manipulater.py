@@ -44,12 +44,12 @@ class manipulater:
         self.ki = 0.4
         self.kd = 0.0
         self.x_dis_tar_1 = 0.335
-        self.x_dis_tar_2 = 0.385
-        self.x_dis_tar_3 = 0.385
+        self.x_dis_tar_2 = 0.395
+        self.x_dis_tar_3 = 0.395 #self.x_dis_tar_3 should equals to self.x_dis_tar_2
         self.x_threshold = 0.02
         self.y_threshold_p = 0.018
         self.y_threshold_n = 0.018
-        self.yaw_threshold = 0.01
+        self.yaw_threshold = 0.1
         self.adjust_speed_lowwer_limit = -0.5
         self.adjust_speed_upper_limit = 0.5
         self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_1, 0, 0]), None)
@@ -161,18 +161,33 @@ class manipulater:
                 cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
                 cmd_vel[0] = -cmd_vel[0]
                 cmd_vel[1] = -cmd_vel[1]
-                cmd_vel[2] = 0
+                # cmd_vel[2] = 0
+
+                # if self.y_prepared != True:
+                #     cmd_vel[0] = 0
+                #     cmd_vel[2] = 0
+                #     print("preparing y axis...")
+
+                # if self.x_prepared != True and self.y_prepared == True:
+                #     cmd_vel[1] = 0
+                #     cmd_vel[2] = 0                
+                #     print("preparing x axis...")
 
                 if self.y_prepared != True:
                     cmd_vel[0] = 0
                     cmd_vel[2] = 0
                     print("preparing y axis...")
 
-                if self.x_prepared != True and self.y_prepared == True:
+                if self.yaw_prepared != True and self.y_prepared == True:
+                    cmd_vel[0] = 0
+                    cmd_vel[1] = 0                
+                    print("preparing yaw...")
+
+                if self.x_prepared != True and self.y_prepared == True and self.yaw_prepared == True:
                     cmd_vel[1] = 0
                     cmd_vel[2] = 0                
                     print("preparing x axis...")
-
+                    
                 if np.abs(target_pos[0] - self.x_dis_tar_1) <= self.x_threshold:
                     self.x_prepared = True
                 else :
@@ -182,10 +197,15 @@ class manipulater:
                     self.y_prepared = True
                 else :
                     self.y_prepared = False
-                
+
+                if np.abs(target_angle - 0) <= self.yaw_threshold:
+                    self.yaw_prepared = True
+                else :
+                    self.yaw_prepared = False
+
                 self.sendBaseVel(cmd_vel)
                 
-                if self.x_prepared == True and self.y_prepared == True:
+                if self.x_prepared == True and self.y_prepared == True and self.yaw_prepared:
                     cmd_vel = [0.0, 0.0, 0.0]
                     pose = Pose()
                     pose.position.x = 0.19
@@ -249,7 +269,7 @@ class manipulater:
                 cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
                 cmd_vel[0] = -cmd_vel[0]
                 cmd_vel[1] = -cmd_vel[1]
-                cmd_vel[2] = 0
+                # cmd_vel[2] = 0
 
                 if self.y_prepared != True:
                     cmd_vel[0] = 0
@@ -341,7 +361,7 @@ class manipulater:
                 cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
                 cmd_vel[0] = -cmd_vel[0]
                 cmd_vel[1] = -cmd_vel[1]
-                cmd_vel[2] = 0
+                # cmd_vel[2] = 0
 
                 if self.y_prepared != True:
                     cmd_vel[0] = 0
