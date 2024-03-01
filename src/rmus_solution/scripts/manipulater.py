@@ -54,8 +54,8 @@ class manipulater:
         self.y_threshold = 0.015 # 可能需要减小，以提高精度
         self.y_rough_threshold = 0.025
         self.yaw_threshold = 0.3
-        self.adjust_speed_lowwer_limit = -0.3
-        self.adjust_speed_upper_limit = 0.3
+        self.adjust_speed_lowwer_limit = -0.1
+        self.adjust_speed_upper_limit = 0.1
         self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_1, 0, 0]), None)
         print(self.position_pid)
 
