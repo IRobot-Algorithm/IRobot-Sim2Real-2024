@@ -112,8 +112,8 @@ def go_to_another_side(location):#去当前矿区的另一侧
     if location == 21:
         go_to(22)
 
-    if location == 32:
-        go_to(33)
+    # if location == 32:
+    #     go_to(33)
 
     if location == 31:
         go_to(32)
@@ -192,11 +192,11 @@ def detect_area(area):#对指定矿区进行一次抓取、放置的全过程。
             put()
             return True
         
-        if my_robot.location == 32:
-            go_to_another_side(my_robot.location)
-            if grip():
-                put()
-                return True     
+        # if my_robot.location == 32:
+        #     go_to_another_side(my_robot.location)
+        #     if grip():
+        #         put()
+        #         return True     
 
 
     elif result == True:

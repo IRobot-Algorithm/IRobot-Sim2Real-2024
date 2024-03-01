@@ -45,8 +45,8 @@ class manipulater:
         self.ki = 0.5
         self.kd = 0.0
         self.x_dis_tar_1 = 0.348 #0.335
-        self.x_dis_tar_2 = 0.395 #0.395
-        self.x_dis_tar_3 = 0.395 #self.x_dis_tar_3 should equals to self.x_dis_tar_2
+        self.x_dis_tar_2 = 0.380 #0.395
+        self.x_dis_tar_3 = 0.380 #self.x_dis_tar_3 should equals to self.x_dis_tar_2
         self.x_threshold = 0.010 # 可能需要减小，以提高精度
         self.x_rough_threshold = 0.7
         self.y_threshold_p = 0.018
