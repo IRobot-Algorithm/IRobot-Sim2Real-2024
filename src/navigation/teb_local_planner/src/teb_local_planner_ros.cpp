@@ -460,18 +460,18 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
     }
   }
   
-  // a feasible solution should be found, reset counter
-  no_infeasible_plans_ = 0;
+  // // a feasible solution should be found, reset counter
+  // no_infeasible_plans_ = 0;
   
-  // store last command (for recovery analysis etc.)
-  last_cmd_ = cmd_vel.twist;
+  // // store last command (for recovery analysis etc.)
+  // last_cmd_ = cmd_vel.twist;
   
-  // Now visualize everything    
-  planner_->visualize();
-  visualization_->publishObstacles(obstacles_, costmap_->getResolution());
-  visualization_->publishViaPoints(via_points_);
-  visualization_->publishGlobalPlan(global_plan_);
-  return mbf_msgs::ExePathResult::SUCCESS;
+  // // Now visualize everything    
+  // planner_->visualize();
+  // visualization_->publishObstacles(obstacles_, costmap_->getResolution());
+  // visualization_->publishViaPoints(via_points_);
+  // visualization_->publishGlobalPlan(global_plan_);
+  // return mbf_msgs::ExePathResult::SUCCESS;
 }
 
 
