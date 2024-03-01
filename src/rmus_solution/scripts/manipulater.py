@@ -40,20 +40,20 @@ class manipulater:
             "/let_manipulater_work", graspsignal, self.trimerworkCallback
         )
 
-        self.kp = 5.0
-        self.ki = 0.4
+        self.kp = 3.0
+        self.ki = 0.5
         self.kd = 0.0
         self.x_dis_tar_1 = 0.335
-        self.x_dis_tar_2 = 0.395
-        self.x_dis_tar_3 = 0.395 #self.x_dis_tar_3 should equals to self.x_dis_tar_2
-        self.x_threshold = 0.02
+        self.x_dis_tar_2 = 0.41 #0.395
+        self.x_dis_tar_3 = 0.41 #self.x_dis_tar_3 should equals to self.x_dis_tar_2
+        self.x_threshold = 0.02 # 可能需要减小，以提高精度
         self.y_threshold_p = 0.018
         self.y_threshold_n = 0.018
-        self.y_threshold = 0.018
-        self.y_rough_threshold = 0.1
+        self.y_threshold = 0.012 # 可能需要减小，以提高精度
+        self.y_rough_threshold = 0.05
         self.yaw_threshold = 0.1
-        self.adjust_speed_lowwer_limit = -0.5
-        self.adjust_speed_upper_limit = 0.5
+        self.adjust_speed_lowwer_limit = -0.3
+        self.adjust_speed_upper_limit = 0.3
         self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_1, 0, 0]), None)
         print(self.position_pid)
 
@@ -166,26 +166,43 @@ class manipulater:
                 cmd_vel[1] = -cmd_vel[1]
                 # cmd_vel[2] = 0
 
+                # if not self.y_rough_prepared:
+                #     cmd_vel[0] = 0
+                #     cmd_vel[2] = 0
+                #     print("preparing rough y axis...")
+
+                # if not self.yaw_prepared and self.y_rough_prepared:
+                #     cmd_vel[0] = 0
+                #     cmd_vel[1] = 0                
+                #     #print("preparing yaw...")
+
+                # if not self.x_prepared and self.y_rough_prepared and self.yaw_prepared:
+                #     cmd_vel[1] = 0
+                #     cmd_vel[2] = 0                
+                #     print("preparing x axis...")
+
+                # if not self.y_prepared and self.y_rough_prepared and self.yaw_prepared and self.x_prepared:
+                #     cmd_vel[0] = 0
+                #     cmd_vel[2] = 0
+                #     print("preparing y axis...")  
+
                 if not self.y_rough_prepared:
                     cmd_vel[0] = 0
                     cmd_vel[2] = 0
                     print("preparing rough y axis...")
-
-                if not self.yaw_prepared and self.y_rough_prepared:
+                elif not self.yaw_prepared:
                     cmd_vel[0] = 0
                     cmd_vel[1] = 0                
                     #print("preparing yaw...")
-
-                if not self.x_prepared and self.y_rough_prepared and self.yaw_prepared:
+                elif not self.x_prepared:
                     cmd_vel[1] = 0
                     cmd_vel[2] = 0                
                     print("preparing x axis...")
-
-                if not self.y_prepared and self.y_rough_prepared and self.yaw_prepared and self.x_prepared:
+                elif not self.y_prepared:
                     cmd_vel[0] = 0
                     cmd_vel[2] = 0
                     print("preparing y axis...")  
-                                      
+
                 if np.abs(target_pos[0] - self.x_dis_tar_1) <= self.x_threshold:
                     self.x_prepared = True
                 else :
@@ -205,7 +222,6 @@ class manipulater:
                 else:
                     self.y_prepared = False
                     self.y_rough_prepared = False
-
 
                 if np.abs(target_angle - 0) <= self.yaw_threshold:
                     self.yaw_prepared = True
