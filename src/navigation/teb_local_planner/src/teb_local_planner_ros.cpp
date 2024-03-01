@@ -304,7 +304,7 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
     return mbf_msgs::ExePathResult::SUCCESS;
   }
 
-  if (dis < 0.2)
+  if (dis < 0.3)
   {
     Eigen::Vector2d v(cos(robot_pose_.theta()) * dx + sin(robot_pose_.theta()) * dy,
                     - sin(robot_pose_.theta()) * dx + cos(robot_pose_.theta()) * dy);
@@ -315,8 +315,6 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
     last_cmd_ = cmd_vel.twist;
     return mbf_msgs::ExePathResult::SUCCESS;
   }
-
-
 
   // check if we should enter any backup mode and apply settings
   configureBackupModes(transformed_plan, goal_idx);
@@ -482,18 +480,18 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
 //     }
 //   }
   
-//   // a feasible solution should be found, reset counter
-//   no_infeasible_plans_ = 0;
+  // a feasible solution should be found, reset counter
+  no_infeasible_plans_ = 0;
   
-//   // store last command (for recovery analysis etc.)
-//   last_cmd_ = cmd_vel.twist;
+  // store last command (for recovery analysis etc.)
+  last_cmd_ = cmd_vel.twist;
   
-//   // Now visualize everything    
-//   planner_->visualize();
-//   visualization_->publishObstacles(obstacles_, costmap_->getResolution());
-//   visualization_->publishViaPoints(via_points_);
-//   visualization_->publishGlobalPlan(global_plan_);
-  // return mbf_msgs::ExePathResult::SUCCESS;
+  // Now visualize everything    
+  planner_->visualize();
+  visualization_->publishObstacles(obstacles_, costmap_->getResolution());
+  visualization_->publishViaPoints(via_points_);
+  visualization_->publishGlobalPlan(global_plan_);
+  return mbf_msgs::ExePathResult::SUCCESS;
 }
 
 
