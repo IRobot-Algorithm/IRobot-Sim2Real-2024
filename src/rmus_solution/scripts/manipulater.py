@@ -176,10 +176,10 @@ class manipulater:
                         cmd_vel[0] = 0
                         cmd_vel[2] = 0
                         print("preparing y axis...")
-                    elif not self.yaw_prepared:
-                        cmd_vel[0] = 0
-                        cmd_vel[1] = 0                
-                        print("preparing yaw...")
+                    # elif not self.yaw_prepared:
+                    #     cmd_vel[0] = 0
+                    #     cmd_vel[1] = 0                
+                    #     print("preparing yaw...")
                     elif not self.x_prepared:
                         cmd_vel[1] = 0
                         cmd_vel[2] = 0                
@@ -214,14 +214,14 @@ class manipulater:
                     self.y_prepared = False
                     self.y_rough_prepared = False
 
-                if np.abs(target_angle - 0) <= self.yaw_threshold:
-                    self.yaw_prepared = True
-                else :
-                    self.yaw_prepared = False
+                # if np.abs(target_angle - 0) <= self.yaw_threshold:
+                #     self.yaw_prepared = True
+                # else :
+                #     self.yaw_prepared = False
 
                 self.sendBaseVel(cmd_vel)
                 
-                if self.x_prepared and self.y_prepared and self.yaw_prepared:
+                if self.x_prepared and self.y_prepared:
                     cmd_vel = [0.0, 0.0, 0.0]
                     pose = Pose()
                     pose.position.x = 0.19
