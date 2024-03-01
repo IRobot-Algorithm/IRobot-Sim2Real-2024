@@ -98,7 +98,7 @@ class manipulater:
             ]
         )
         angle = sciR.from_quat(quat).as_euler("YXZ")[0]
-        print("target_pos:", pos, "target_angle:", angle)
+        #print("target_pos:", pos, "target_angle:", angle)
         return pos, angle
 
     def sendBaseVel(self, vel):
@@ -157,6 +157,7 @@ class manipulater:
                 target_marker_pose = self.current_marker_poses
                 if target_marker_pose is None:
                     continue
+
 
                 target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
                     target_marker_pose
