@@ -304,7 +304,7 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
     return mbf_msgs::ExePathResult::SUCCESS;
   }
 
-  if (dis < 0.2)
+  if (dis < 0.3)
   {
     Eigen::Vector2d v(cos(robot_pose_.theta()) * dx + sin(robot_pose_.theta()) * dy,
                     - sin(robot_pose_.theta()) * dx + cos(robot_pose_.theta()) * dy);
@@ -315,8 +315,6 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
     last_cmd_ = cmd_vel.twist;
     return mbf_msgs::ExePathResult::SUCCESS;
   }
-
-
 
   // check if we should enter any backup mode and apply settings
   configureBackupModes(transformed_plan, goal_idx);
@@ -331,169 +329,149 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   }
               
   // Get current goal point (last point of the transformed plan)
-  robot_goal_.x() = transformed_plan[5].pose.position.x;
-  robot_goal_.y() = transformed_plan[5].pose.position.y;
+  robot_goal_.x() = transformed_plan.back().pose.position.x;
+  robot_goal_.y() = transformed_plan.back().pose.position.y;
+  // Overwrite goal orientation if needed
+  if (cfg_.trajectory.global_plan_overwrite_orientation)
+  {
+    robot_goal_.theta() = estimateLocalGoalOrientation(global_plan_, transformed_plan.back(), goal_idx, tf_plan_to_global);
+    // overwrite/update goal orientation of the transformed plan with the actual goal (enable using the plan as initialization)
+    tf2::Quaternion q;
+    q.setRPY(0, 0, robot_goal_.theta());
+    tf2::convert(q, transformed_plan.back().pose.orientation);
+  }  
+  else
+  {
+    robot_goal_.theta() = tf2::getYaw(transformed_plan.back().pose.orientation);
+  }
 
-  dx = robot_goal_.x() - robot_pose_.x();
-  dy = robot_goal_.y() - robot_pose_.y();
-
-  Eigen::Vector2d v(cos(robot_pose_.theta()) * dx + sin(robot_pose_.theta()) * dy,
-                  - sin(robot_pose_.theta()) * dx + cos(robot_pose_.theta()) * dy);
-
-  v *= 100;
-
-  if(fabs(v(0)) > 0.5)
-    v *= 0.5 / fabs(v(0));
-  if(fabs(v(1)) > 0.5)
-    v *= 0.5 / fabs(v(1));
-
-  cmd_vel.twist.linear.x = v(0);
-  cmd_vel.twist.linear.y = v(1);
-  cmd_vel.twist.angular.z = delta_orient * 3;
-  return mbf_msgs::ExePathResult::SUCCESS;
-
-
-//   // Overwrite goal orientation if needed
-//   if (cfg_.trajectory.global_plan_overwrite_orientation)
-//   {
-//     robot_goal_.theta() = estimateLocalGoalOrientation(global_plan_, transformed_plan.back(), goal_idx, tf_plan_to_global);
-//     // overwrite/update goal orientation of the transformed plan with the actual goal (enable using the plan as initialization)
-//     tf2::Quaternion q;
-//     q.setRPY(0, 0, robot_goal_.theta());
-//     tf2::convert(q, transformed_plan.back().pose.orientation);
-//   }  
-//   else
-//   {
-//     robot_goal_.theta() = tf2::getYaw(transformed_plan.back().pose.orientation);
-//   }
-
-//   // overwrite/update start of the transformed plan with the actual robot position (allows using the plan as initial trajectory)
-//   if (transformed_plan.size()==1) // plan only contains the goal
-//   {
-//     transformed_plan.insert(transformed_plan.begin(), geometry_msgs::PoseStamped()); // insert start (not yet initialized)
-//   }
-//   transformed_plan.front() = robot_pose; // update start
+  // overwrite/update start of the transformed plan with the actual robot position (allows using the plan as initial trajectory)
+  if (transformed_plan.size()==1) // plan only contains the goal
+  {
+    transformed_plan.insert(transformed_plan.begin(), geometry_msgs::PoseStamped()); // insert start (not yet initialized)
+  }
+  transformed_plan.front() = robot_pose; // update start
     
-//   // clear currently existing obstacles
-//   obstacles_.clear();
+  // clear currently existing obstacles
+  obstacles_.clear();
   
-//   // Update obstacle container with costmap information or polygons provided by a costmap_converter plugin
-//   if (costmap_converter_)
-//     updateObstacleContainerWithCostmapConverter();
-//   else
-//     updateObstacleContainerWithCostmap();
+  // Update obstacle container with costmap information or polygons provided by a costmap_converter plugin
+  if (costmap_converter_)
+    updateObstacleContainerWithCostmapConverter();
+  else
+    updateObstacleContainerWithCostmap();
   
-//   // also consider custom obstacles (must be called after other updates, since the container is not cleared)
-//   updateObstacleContainerWithCustomObstacles();
+  // also consider custom obstacles (must be called after other updates, since the container is not cleared)
+  updateObstacleContainerWithCustomObstacles();
   
     
-//   // Do not allow config changes during the following optimization step
-//   boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
+  // Do not allow config changes during the following optimization step
+  boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
     
-//   // Now perform the actual planning
-// //   bool success = planner_->plan(robot_pose_, robot_goal_, robot_vel_, cfg_.goal_tolerance.free_goal_vel); // straight line init
-//   bool success = planner_->plan(transformed_plan, &robot_vel_, cfg_.goal_tolerance.free_goal_vel);
-//   if (!success)
-//   {
-//     planner_->clearPlanner(); // force reinitialization for next time
-//     ROS_WARN("teb_local_planner was not able to obtain a local plan for the current setting.");
+  // Now perform the actual planning
+//   bool success = planner_->plan(robot_pose_, robot_goal_, robot_vel_, cfg_.goal_tolerance.free_goal_vel); // straight line init
+  bool success = planner_->plan(transformed_plan, &robot_vel_, cfg_.goal_tolerance.free_goal_vel);
+  if (!success)
+  {
+    planner_->clearPlanner(); // force reinitialization for next time
+    ROS_WARN("teb_local_planner was not able to obtain a local plan for the current setting.");
     
-//     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
-//     time_last_infeasible_plan_ = ros::Time::now();
-//     last_cmd_ = cmd_vel.twist;
-//     message = "teb_local_planner was not able to obtain a local plan";
-//     return mbf_msgs::ExePathResult::NO_VALID_CMD;
-//   }
+    ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+    time_last_infeasible_plan_ = ros::Time::now();
+    last_cmd_ = cmd_vel.twist;
+    message = "teb_local_planner was not able to obtain a local plan";
+    return mbf_msgs::ExePathResult::NO_VALID_CMD;
+  }
 
-//   // Check for divergence
-//   if (planner_->hasDiverged())
-//   {
-//     cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
+  // Check for divergence
+  if (planner_->hasDiverged())
+  {
+    cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
 
-//     // Reset everything to start again with the initialization of new trajectories.
-//     planner_->clearPlanner();
-//     ROS_WARN_THROTTLE(1.0, "TebLocalPlannerROS: the trajectory has diverged. Resetting planner...");
+    // Reset everything to start again with the initialization of new trajectories.
+    planner_->clearPlanner();
+    ROS_WARN_THROTTLE(1.0, "TebLocalPlannerROS: the trajectory has diverged. Resetting planner...");
 
-//     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
-//     time_last_infeasible_plan_ = ros::Time::now();
-//     last_cmd_ = cmd_vel.twist;
-//     return mbf_msgs::ExePathResult::NO_VALID_CMD;
-//   }
+    ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+    time_last_infeasible_plan_ = ros::Time::now();
+    last_cmd_ = cmd_vel.twist;
+    return mbf_msgs::ExePathResult::NO_VALID_CMD;
+  }
          
-//   // Check feasibility (but within the first few states only)
-//   if(cfg_.robot.is_footprint_dynamic)
-//   {
-//     // Update footprint of the robot and minimum and maximum distance from the center of the robot to its footprint vertices.
-//     footprint_spec_ = costmap_ros_->getRobotFootprint();
-//     costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);
-//   }
+  // Check feasibility (but within the first few states only)
+  if(cfg_.robot.is_footprint_dynamic)
+  {
+    // Update footprint of the robot and minimum and maximum distance from the center of the robot to its footprint vertices.
+    footprint_spec_ = costmap_ros_->getRobotFootprint();
+    costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);
+  }
 
-//   bool feasible = planner_->isTrajectoryFeasible(costmap_model_.get(), footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius, cfg_.trajectory.feasibility_check_no_poses, cfg_.trajectory.feasibility_check_lookahead_distance);
-//   if (!feasible)
-//   {
-//     cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
+  bool feasible = planner_->isTrajectoryFeasible(costmap_model_.get(), footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius, cfg_.trajectory.feasibility_check_no_poses, cfg_.trajectory.feasibility_check_lookahead_distance);
+  if (!feasible)
+  {
+    cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
 
-//     // now we reset everything to start again with the initialization of new trajectories.
-//     planner_->clearPlanner();
-//     ROS_WARN("TebLocalPlannerROS: trajectory is not feasible. Resetting planner...");
+    // now we reset everything to start again with the initialization of new trajectories.
+    planner_->clearPlanner();
+    ROS_WARN("TebLocalPlannerROS: trajectory is not feasible. Resetting planner...");
     
-//     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
-//     time_last_infeasible_plan_ = ros::Time::now();
-//     last_cmd_ = cmd_vel.twist;
-//     message = "teb_local_planner trajectory is not feasible";
-//     return mbf_msgs::ExePathResult::NO_VALID_CMD;
-//   }
+    ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+    time_last_infeasible_plan_ = ros::Time::now();
+    last_cmd_ = cmd_vel.twist;
+    message = "teb_local_planner trajectory is not feasible";
+    return mbf_msgs::ExePathResult::NO_VALID_CMD;
+  }
 
-//   // Get the velocity command for this sampling interval
-//   if (!planner_->getVelocityCommand(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z, cfg_.trajectory.control_look_ahead_poses))
+  // Get the velocity command for this sampling interval
+  if (!planner_->getVelocityCommand(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z, cfg_.trajectory.control_look_ahead_poses))
 
-//   {
-//     planner_->clearPlanner();
-//     ROS_WARN("TebLocalPlannerROS: velocity command invalid. Resetting planner...");
-//     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
-//     time_last_infeasible_plan_ = ros::Time::now();
-//     last_cmd_ = cmd_vel.twist;
-//     message = "teb_local_planner velocity command invalid";
-//     return mbf_msgs::ExePathResult::NO_VALID_CMD;
-//   }
+  {
+    planner_->clearPlanner();
+    ROS_WARN("TebLocalPlannerROS: velocity command invalid. Resetting planner...");
+    ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+    time_last_infeasible_plan_ = ros::Time::now();
+    last_cmd_ = cmd_vel.twist;
+    message = "teb_local_planner velocity command invalid";
+    return mbf_msgs::ExePathResult::NO_VALID_CMD;
+  }
   
-//   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
-//   saturateVelocity(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z,
-//                    cfg_.robot.max_vel_x, cfg_.robot.max_vel_y, cfg_.robot.max_vel_trans, cfg_.robot.max_vel_theta, 
-//                    cfg_.robot.max_vel_x_backwards);
+  // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
+  saturateVelocity(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z,
+                   cfg_.robot.max_vel_x, cfg_.robot.max_vel_y, cfg_.robot.max_vel_trans, cfg_.robot.max_vel_theta, 
+                   cfg_.robot.max_vel_x_backwards);
 
-//   // convert rot-vel to steering angle if desired (carlike robot).
-//   // The min_turning_radius is allowed to be slighly smaller since it is a soft-constraint
-//   // and opposed to the other constraints not affected by penalty_epsilon. The user might add a safety margin to the parameter itself.
-//   if (cfg_.robot.cmd_angle_instead_rotvel)
-//   {
-//     cmd_vel.twist.angular.z = convertTransRotVelToSteeringAngle(cmd_vel.twist.linear.x, cmd_vel.twist.angular.z,
-//                                                                 cfg_.robot.wheelbase, 0.95*cfg_.robot.min_turning_radius);
-//     if (!std::isfinite(cmd_vel.twist.angular.z))
-//     {
-//       cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
-//       last_cmd_ = cmd_vel.twist;
-//       planner_->clearPlanner();
-//       ROS_WARN("TebLocalPlannerROS: Resulting steering angle is not finite. Resetting planner...");
-//       ++no_infeasible_plans_; // increase number of infeasible solutions in a row
-//       time_last_infeasible_plan_ = ros::Time::now();
-//       message = "teb_local_planner steering angle is not finite";
-//       return mbf_msgs::ExePathResult::NO_VALID_CMD;
-//     }
-//   }
+  // convert rot-vel to steering angle if desired (carlike robot).
+  // The min_turning_radius is allowed to be slighly smaller since it is a soft-constraint
+  // and opposed to the other constraints not affected by penalty_epsilon. The user might add a safety margin to the parameter itself.
+  if (cfg_.robot.cmd_angle_instead_rotvel)
+  {
+    cmd_vel.twist.angular.z = convertTransRotVelToSteeringAngle(cmd_vel.twist.linear.x, cmd_vel.twist.angular.z,
+                                                                cfg_.robot.wheelbase, 0.95*cfg_.robot.min_turning_radius);
+    if (!std::isfinite(cmd_vel.twist.angular.z))
+    {
+      cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
+      last_cmd_ = cmd_vel.twist;
+      planner_->clearPlanner();
+      ROS_WARN("TebLocalPlannerROS: Resulting steering angle is not finite. Resetting planner...");
+      ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+      time_last_infeasible_plan_ = ros::Time::now();
+      message = "teb_local_planner steering angle is not finite";
+      return mbf_msgs::ExePathResult::NO_VALID_CMD;
+    }
+  }
   
-//   // a feasible solution should be found, reset counter
-//   no_infeasible_plans_ = 0;
+  // a feasible solution should be found, reset counter
+  no_infeasible_plans_ = 0;
   
-//   // store last command (for recovery analysis etc.)
-//   last_cmd_ = cmd_vel.twist;
+  // store last command (for recovery analysis etc.)
+  last_cmd_ = cmd_vel.twist;
   
-//   // Now visualize everything    
-//   planner_->visualize();
-//   visualization_->publishObstacles(obstacles_, costmap_->getResolution());
-//   visualization_->publishViaPoints(via_points_);
-//   visualization_->publishGlobalPlan(global_plan_);
-  // return mbf_msgs::ExePathResult::SUCCESS;
+  // Now visualize everything    
+  planner_->visualize();
+  visualization_->publishObstacles(obstacles_, costmap_->getResolution());
+  visualization_->publishViaPoints(via_points_);
+  visualization_->publishGlobalPlan(global_plan_);
+  return mbf_msgs::ExePathResult::SUCCESS;
 }
 
 
