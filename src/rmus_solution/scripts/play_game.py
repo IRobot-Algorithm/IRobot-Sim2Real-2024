@@ -69,8 +69,9 @@ def grip():
                 
             if tell_is_here(i) == False:
                 rospy.loginfo("恭喜！抓取成功！！")
+                add_area_information(blocks[i].area)
                 remove_block_information(i)
-                add_area_information(i)
+
                 my_robot.block = i
                 return True
     return False
