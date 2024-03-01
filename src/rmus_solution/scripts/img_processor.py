@@ -227,7 +227,7 @@ class Processor:
             ) = marker_detection(
                 self.image,
                 camera_matrix=self.camera_matrix,
-                template_ids=[],
+                template_ids=[1, 2, 3, 4, 5, 6],
                 area_filter_size=1200,
                 verbose=self.verbose,
                 height_range=(0.00, 0.06),
