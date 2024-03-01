@@ -169,43 +169,6 @@ class manipulater:
                 cmd_vel[0] = -cmd_vel[0]
                 cmd_vel[1] = -cmd_vel[1]
 
-                # if not self.y_rough_prepared:
-                #     cmd_vel[0] = 0
-                #     cmd_vel[2] = 0
-                #     print("preparing rough y axis...")
-
-                # if not self.yaw_prepared and self.y_rough_prepared:
-                #     cmd_vel[0] = 0
-                #     cmd_vel[1] = 0                
-                #     #print("preparing yaw...")
-
-                # if not self.x_prepared and self.y_rough_prepared and self.yaw_prepared:
-                #     cmd_vel[1] = 0
-                #     cmd_vel[2] = 0                
-                #     print("preparing x axis...")
-
-                # if not self.y_prepared and self.y_rough_prepared and self.yaw_prepared and self.x_prepared:
-                #     cmd_vel[0] = 0
-                #     cmd_vel[2] = 0
-                #     print("preparing y axis...")  
-
-                # if not self.y_rough_prepared:
-                #     cmd_vel[0] = 0
-                #     cmd_vel[2] = 0
-                #     print("preparing rough y axis...")
-                # elif not self.yaw_prepared:
-                #     cmd_vel[0] = 0
-                #     cmd_vel[1] = 0                
-                #     #print("preparing yaw...")
-                # elif not self.x_prepared:
-                #     cmd_vel[1] = 0
-                #     cmd_vel[2] = 0                
-                #     print("preparing x axis...")
-                # elif not self.y_prepared:
-                #     cmd_vel[0] = 0
-                #     cmd_vel[2] = 0
-                #     print("preparing y axis...")  
-
                 if self.x_rough_prepared and self.y_rough_prepared:
                     if not self.y_prepared:
                         cmd_vel[0] = 0
@@ -232,17 +195,12 @@ class manipulater:
                 if np.abs(target_pos[0] - self.x_dis_tar_1) <= self.x_threshold:
                     self.x_prepared = True
                     self.x_rough_prepared = True
-                elif np.abs(target_pos[0] - self.x_dis_tar_1) <= self.x_rough_threshold:
+                elif np.abs(target_pos[0]) <= self.x_rough_threshold:
                     self.x_prepared = False
                     self.x_rough_prepared = True                
                 else :
                     self.x_prepared = False
                     self.x_rough_prepared = False                
-                
-                # if (target_pos[1] - 0.0) <= self.y_threshold_p and (0.0 - target_pos[1]) <= self.y_threshold_n:
-                #     self.y_prepared = True
-                # else :
-                #     self.y_prepared = False
 
                 if np.abs(target_pos[1] - 0.0) <= self.y_threshold:
                     self.y_prepared = True
