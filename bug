@@ -1,0 +1,46 @@
+
+preparing x axis...
+[INFO] [1709283832.323422]: Place: reach the goal for placing.
+[INFO] [1709283832.324604]: close the gripper
+[INFO] [1709283833.326105]: close the gripper
+[INFO] [1709283834.328050]: reset the arm
+[ERROR] [1709283835.768040]: 抓取失败，将进行第2抓取
+[INFO] [1709283835.770060]: First trim then grasp
+[INFO] [1709283835.770909]: Trim to the right place
+[INFO] [1709283835.771581]: open the gripper
+
+[INFO] [1709283838.283050]: Place: reach the goal for placing.
+[INFO] [1709283838.284375]: close the gripper
+[INFO] [1709283839.287990]: close the gripper
+[INFO] [1709283840.290772]: reset the arm
+[INFO] [1709283842.751172]: 恭喜！抓取成功！！
+block_place_information[ 1 ]= {4}
+已移除掉0
+block_place_information[ 3 ] set()
+[INFO] [1709283842.777895]: >>>>>>>>>>>>>>>>>>>>>>>>>
+[INFO] [1709283842.778868]: req: call =  point = 8
+[INFO] [1709283842.779577]: last mission = 11
+[ INFO] [1709283850.782739503]: GOAL Reached!
+[INFO] [1709283850.880557]: Reach Goal station3!
+[INFO] [1709283850.881911]: 到达兑换站X
+[INFO] [1709283851.389409]: First trim then place
+[INFO] [1709283851.390853]: <manipulater>: now prepare to grip
+[INFO] [1709283851.890081]: Trim well in the all dimention, going open loop
+[INFO] [1709283853.494943]: Place: reach the goal for placing.
+[INFO] [1709283853.496706]: Trim well in the horizon dimention
+target_pos: [ 0.27232282 -0.00449272 -0.01680614] target_angle: 0.09105329929148995
+[INFO] [1709283854.499122]: open the gripper
+[INFO] [1709283855.502378]: reset the arm
+block_place_information[ 2 ]= {0}
+[INFO] [1709283856.105496]: >>>>>>>>>>>>>>>>>>>>>>>>>
+[INFO] [1709283856.106484]: req: call =  point = 21
+[INFO] [1709283856.107182]: last mission = 8
+[ INFO] [1709283860.508342360]: GOAL Reached!
+[INFO] [1709283860.608160]: Reach Goal block21!
+已移除掉0
+block_place_information[ 2 ] {2, 5}
+这里有目标方块2
+[INFO] [1709283860.790284]: latency detected!
+[INFO] [1709283860.891721]: First trim then grasp
+[INFO] [1709283860.892928]: Trim to the right place
+[INFO] [1709283860.893656]: open the gripper

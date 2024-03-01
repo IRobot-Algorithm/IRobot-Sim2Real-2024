@@ -40,7 +40,7 @@ class manipulater:
             "/let_manipulater_work", graspsignal, self.trimerworkCallback
         )
 
-        self.kp = 20.0
+        self.kp = 10.0
         self.ki = 0.5
         self.kd = 0.0
         self.x_dis_tar_1 = 0.348 #0.335
@@ -96,7 +96,7 @@ class manipulater:
             ]
         )
         angle = sciR.from_quat(quat).as_euler("YXZ")[0]
-        print("target_pos:", pos, "target_angle:", angle)
+        #print("target_pos:", pos, "target_angle:", angle)
         return pos, angle
 
     def sendBaseVel(self, vel):
@@ -155,6 +155,7 @@ class manipulater:
                 if target_marker_pose is None:
                     continue
 
+
                 target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
                     target_marker_pose
                 )
@@ -207,15 +208,15 @@ class manipulater:
                 if not self.y_prepared:
                     cmd_vel[0] = 0
                     cmd_vel[2] = 0
-                    print("preparing y axis...")
+                    #print("preparing y axis...")
                 elif not self.yaw_prepared:
                     cmd_vel[0] = 0
                     cmd_vel[1] = 0                
-                    print("preparing yaw...")
+                    #print("preparing yaw...")
                 elif not self.x_prepared:
                     cmd_vel[1] = 0
                     cmd_vel[2] = 0                
-                    print("preparing x axis...")
+                    #print("preparing x axis...")
 
 
                 if np.abs(target_pos[0] - self.x_dis_tar_1) <= self.x_threshold:

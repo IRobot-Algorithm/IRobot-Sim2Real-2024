@@ -8,6 +8,8 @@ from geometry_msgs.msg import Pose
 
 from std_msgs.msg import Bool
 
+import tf2_ros
+import tf2_geometry_msgs
 
 timeout = False
 
@@ -18,7 +20,8 @@ class block:
         self.mode = mode
         self.placement = placement
         self.is_set = 0#是否已经被放好了
-
+        self.pos_in_map = None
+        self.pos_in_cam = None
 class robot:
     def __init__(self):
         self.block = 0#矿车含有的矿石,0表示无矿石
@@ -45,6 +48,29 @@ def catch():
         return True   #True代表超时了
     return False
 
+def is_obstructed_by_wall(block_id):
+    get_block_pos_in_cam(block_id)
+    get_block_pos_in_map(block_id)
+    print("blocks[",block_id,"]",blocks[block_id].pos_in_map)
+    print("my_robot.location =",my_robot.location)
+    if blocks[block_id].pos_in_map == None:#若TF崩了，则不进行卡墙判断
+        return False
+    
+    half_robot_width = 0.15
+    if my_robot.location == 12:
+        if -0.3 + half_robot_width >= blocks[block_id].pos_in_map.position.x:
+            rospy.logerr("抓此方块会被墙挡住，放弃此角度")
+            return True
+    if my_robot.location==21:
+        if 2.9 - half_robot_width <= blocks[block_id].pos_in_map.position.x:
+            rospy.logerr("抓此方块会被墙挡住，放弃此角度")
+            return True
+    if my_robot.location == 32 or my_robot.location == 31:
+        if 3.6 - half_robot_width <= blocks[block_id].pos_in_map.position.y:
+            rospy.logerr("抓此方块会被墙挡住，放弃此角度")
+            return True
+    return False
+
 def tell_is_here(block_id):#判断此方块在没在这里
     blockinfo = rospy.wait_for_message("/all_detect_ID", UInt8MultiArray, timeout=1)
     return block_id in blockinfo.data
@@ -55,6 +81,8 @@ def grip():
         if blocks[i].mode != -1 and tell_is_here(i):
             print("这里有目标方块"+ str(i))
             img_switch_mode(i)
+            if is_obstructed_by_wall(i):
+                return False
             if catch():
                 return False
             rospy.sleep(1)
@@ -64,14 +92,13 @@ def grip():
                 rospy.logerr("抓取失败，将进行第"+str(times)+"抓取")
                 if catch(): 
                     return False
-                rospy.sleep(2)#给抓取好方块留出时间
+                rospy.sleep(1)#给抓取好方块留出时间
                 
-                
+            
             if tell_is_here(i) == False:
                 rospy.loginfo("恭喜！抓取成功！！")
                 add_area_information(blocks[i].area)
                 remove_block_information(i)
-
                 my_robot.block = i
                 return True
     return False
@@ -81,8 +108,13 @@ def go_to_another_side(location):#去当前矿区的另一侧
         go_to(12)
     if location == 21:
         go_to(22)
+
+    if location == 32:
+        go_to(33)
+
     if location == 31:
         go_to(32)
+
     add_area_information(location//10)
 
 def put():
@@ -152,6 +184,14 @@ def detect_area(area):#对指定矿区进行一次抓取、放置的全过程。
         if grip():
             put()
             return True
+        
+        if my_robot.location == 32:
+            go_to_another_side(my_robot.location)
+            if grip():
+                put()
+                return True     
+
+
     elif result == True:
         put()
         return True
@@ -177,14 +217,16 @@ def grip_specified_block(block):
     else:
         return False
 
-
 def update_rest_block(mode):
     sum = 0
     for i in range(1,7):
         if blocks[i].mode == mode and blocks[i].is_set == 0:
             sum+=1
     return sum
-if __name__ == '__main__':
+
+
+
+def init_this_node():
     rospy.init_node("gamecore_node")
     # game_begin_time = rospy.Time.now().to_sec()
     while not rospy.is_shutdown():
@@ -212,11 +254,51 @@ if __name__ == '__main__':
             rospy.sleep(0.5)
 
     rospy.loginfo("Get all rospy sevice!")
+
+def get_block_pos_in_cam(block_id):
+    print("get_block_pos_in_cam")
+    blockinfo = rospy.wait_for_message("/get_blockinfo", Pose, timeout=1)
+    
+    blocks[block_id].pos_in_cam = blockinfo
+    
+def get_block_pos_in_map(block_id):
+    posestamped_in_cam = tf2_geometry_msgs.PoseStamped()
+    posestamped_in_cam.header.stamp = rospy.Time.now()
+    posestamped_in_cam.header.frame_id = (
+        "camera_aligned_depth_to_color_frame_correct"
+    )
+
+    posestamped_in_cam.pose = blocks[block_id].pos_in_cam
+    try:
+        posestamped_in_base = tfBuffer.transform(posestamped_in_cam, "map", rospy.Duration(0.01))
+        blocks[block_id].pos_in_map = posestamped_in_base.pose
+    
+        pub.publish(posestamped_in_base)        
+    except:
+        rospy.logerr("无法进行TF转换")
+        blocks[block_id].pos_in_map = None
+
+def grip_target_block(mode):#看一下有没有目标矿物
+        for i in range(1, 7):
+            if blocks[i].mode == mode and blocks[i].area != -1 and my_robot.location//10 == blocks[i].area:
+                grip_specified_block(blocks[i])
+        
+if __name__ == '__main__':
+    init_this_node()
     game_begin_time = rospy.Time.now().to_sec()
+
+    pub = rospy.Publisher('/block_pos_in_map', tf2_geometry_msgs.PoseStamped, queue_size=10)#用于测试
+
+    tfBuffer = tf2_ros.Buffer()
+    tf_listener = tf2_ros.TransformListener(tfBuffer)
+
+
     navigation = rospy.ServiceProxy("/set_navigation_goal", setgoal)
     trimer = rospy.ServiceProxy("/let_manipulater_work", graspsignal)
     img_switch_mode = rospy.ServiceProxy("/image_processor_switch_mode", switch)
-    rospy.sleep(2)
+    
+
+
 
     rospy.Subscriber("/timeout", Bool, set_timeout)
 
@@ -248,20 +330,19 @@ if __name__ == '__main__':
     is_here = 0#判断这里有没有目标方块
 
     while rest_block > 0:
-        for i in range(1, 7):
-            if blocks[i].mode == 1 and blocks[i].area != -1:
-                grip_specified_block(blocks[i])
+        grip_target_block(1)
 
         rest_block = update_rest_block(1)
 
         if rest_block > 0:
             detect_area(1)
+        grip_target_block(1)
         rest_block = update_rest_block(1)
-  
+
         if rest_block > 0:
             detect_area(2)
         rest_block = update_rest_block(1)
-
+        grip_target_block(1)
         if rest_block > 0:
             detect_area(3)
         rest_block = update_rest_block(1)
@@ -279,18 +360,18 @@ if __name__ == '__main__':
     #     rest_block = 
     rest_block = 3
     while rest_block > 0:
-        for i in range(1, 7):
-            if blocks[i].mode == 2 and blocks[i].area != -1:
-                grip_specified_block(blocks[i])
+        grip_target_block(2)
 
         rest_block = update_rest_block(2)
 
         if rest_block > 0:
             detect_area(1)
+        grip_target_block(2)
         rest_block = update_rest_block(2)
   
         if rest_block > 0:
             detect_area(2)
+        grip_target_block(2)
         rest_block = update_rest_block(2)
 
         if rest_block > 0:
