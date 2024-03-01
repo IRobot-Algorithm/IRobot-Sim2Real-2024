@@ -41,18 +41,19 @@ class manipulater:
         )
 
         self.kp = 10.0
+        self.kp = 10.0
         self.ki = 0.5
         self.kd = 0.0
         self.x_dis_tar_1 = 0.348 #0.335
-        self.x_dis_tar_2 = 0.41 #0.395
-        self.x_dis_tar_3 = 0.41 #self.x_dis_tar_3 should equals to self.x_dis_tar_2
-        self.x_threshold = 0.005 # 可能需要减小，以提高精度
+        self.x_dis_tar_2 = 0.395 #0.395
+        self.x_dis_tar_3 = 0.395 #self.x_dis_tar_3 should equals to self.x_dis_tar_2
+        self.x_threshold = 0.010 # 可能需要减小，以提高精度
         self.x_rough_threshold = 0.7
         self.y_threshold_p = 0.018
         self.y_threshold_n = 0.018
-        self.y_threshold = 0.013 # 可能需要减小，以提高精度
-        self.y_rough_threshold = 0.05
-        self.yaw_threshold = 0.1
+        self.y_threshold = 0.015 # 可能需要减小，以提高精度
+        self.y_rough_threshold = 0.025
+        self.yaw_threshold = 0.3
         self.adjust_speed_lowwer_limit = -0.3
         self.adjust_speed_upper_limit = 0.3
         self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_1, 0, 0]), None)
@@ -235,7 +236,7 @@ class manipulater:
                     break
 
                 current_time2 = rospy.Time.now()
-                if current_time2.secs - current_time1.secs > 10:#如果微调时间超过xx秒
+                if current_time2.secs - current_time1.secs > 13:#如果微调时间超过xx秒
                     rospy.logerr("微调时间过长")
                     self.timeout_pub.publish(True)
                     rospy.sleep(2)
