@@ -163,7 +163,6 @@ class manipulater:
                 cmd_vel = self.position_pid.__call__(np.array([target_pos[0], target_pos[1], target_angle]))
                 # print("cmd_vel before clip", cmd_vel)
                 cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
-                # print("cmd_vel after  clip", cmd_vel)
                 cmd_vel[0] = -cmd_vel[0]
                 cmd_vel[1] = -cmd_vel[1]
                 # cmd_vel[2] = 0

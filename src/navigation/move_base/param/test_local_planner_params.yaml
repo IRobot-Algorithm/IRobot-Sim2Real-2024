@@ -32,9 +32,9 @@ TebLocalPlannerROS:
     vertices: [[-0.16, -0.12], [-0.16, 0.12], [0.16, 0.12], [0.16, -0.12]] # 2D shape of the robot
 
   # GoalTolerance    
-  xy_goal_tolerance: 0.15
-  yaw_goal_tolerance: 0.06
-  free_goal_vel: True
+  xy_goal_tolerance: 0.05
+  yaw_goal_tolerance: 0.05
+  free_goal_vel: False
     
   # Obstacles    
   min_obstacle_dist: 0.05 # 0.05 # a small value may be prefered
@@ -52,9 +52,9 @@ TebLocalPlannerROS:
   optimization_activate: True
   optimization_verbose: False
   penalty_epsilon: 0.1
-  weight_max_vel_x: 0.2
-  weight_max_vel_y: 0.2
-  weight_max_vel_theta: 0.2
+  weight_max_vel_x: 0.1
+  weight_max_vel_y: 0.1
+  weight_max_vel_theta: 0.1
   weight_acc_lim_x: 1
   weight_acc_lim_y: 1
   weight_acc_lim_theta: 1
