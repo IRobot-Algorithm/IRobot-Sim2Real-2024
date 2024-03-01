@@ -66,7 +66,7 @@ def is_obstructed_by_wall(block_id):
         if 2.9 - half_robot_width <= blocks[block_id].pos_in_map.position.x:
             rospy.logerr("抓此方块会被墙挡住，放弃此角度")
             return True
-    if my_robot.location == 32 or my_robot.location == 31:
+    if my_robot.location == 31:
         if 3.6 - half_robot_width <= blocks[block_id].pos_in_map.position.y:
             rospy.logerr("抓此方块会被墙挡住，放弃此角度")
             return True
@@ -271,7 +271,7 @@ def get_block_pos_in_map(block_id):
 
     posestamped_in_cam.pose = blocks[block_id].pos_in_cam
     try:
-        posestamped_in_base = tfBuffer.transform(posestamped_in_cam, "map", rospy.Duration(0.01))
+        posestamped_in_base = tfBuffer.transform(posestamped_in_cam, "map", rospy.Duration(1.0))
         blocks[block_id].pos_in_map = posestamped_in_base.pose
     
         pub.publish(posestamped_in_base)        
@@ -283,7 +283,7 @@ def grip_target_block(mode):#看一下有没有目标矿物
         for i in range(1, 7):
             if blocks[i].mode == mode and blocks[i].area != -1 and my_robot.location//10 == blocks[i].area:
                 grip_specified_block(blocks[i])
-        
+
 if __name__ == '__main__':
     init_this_node()
     game_begin_time = rospy.Time.now().to_sec()
