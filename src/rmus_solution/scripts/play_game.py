@@ -11,7 +11,6 @@ from std_msgs.msg import Bool
 import tf2_ros
 import tf2_geometry_msgs
 
-from nav_msgs.msg import Odometry
 
 
 timeout = False
@@ -69,10 +68,10 @@ def is_obstructed_by_wall(block_id):
         if 2.9 - half_robot_width <= blocks[block_id].pos_in_map.position.x:
             rospy.logerr("抓此方块会被墙挡住，放弃此角度")
             return True
-    if my_robot.location == 31:
-        if 3.6 - half_robot_width <= blocks[block_id].pos_in_map.position.y:
-            rospy.logerr("抓此方块会被墙挡住，放弃此角度")
-            return True
+    # if my_robot.location == 31:
+    #     if 3.6 - half_robot_width <= blocks[block_id].pos_in_map.position.y:
+    #         rospy.logerr("抓此方块会被墙挡住，放弃此角度")
+    #         return True
     return False
 
 def tell_is_here(block_id):#判断此方块在没在这里
@@ -305,9 +304,7 @@ if __name__ == '__main__':
     trimer = rospy.ServiceProxy("/let_manipulater_work", graspsignal)
     img_switch_mode = rospy.ServiceProxy("/image_processor_switch_mode", switch)
     
-
-    # navigation_start = rospy.wait_for_message('/odom', Odometry, timeout=7)
-    rospy.sleep(1)
+    rospy.sleep(2)
     rospy.Subscriber("/timeout", Bool, set_timeout)
 
     trim_res = trimer(0, "")
