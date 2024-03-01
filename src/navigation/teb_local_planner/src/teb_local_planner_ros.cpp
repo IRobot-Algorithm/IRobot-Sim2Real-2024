@@ -329,9 +329,17 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   }
               
   // Get current goal point (last point of the transformed plan)
-  robot_goal_.x() = transformed_plan[5].pose.position.x;
-  robot_goal_.y() = transformed_plan[5].pose.position.y;
-
+  if (transformed_plan.size() > 5)
+  {
+    robot_goal_.x() = transformed_plan[5].pose.position.x;
+    robot_goal_.y() = transformed_plan[5].pose.position.y;
+  }
+  else
+  {
+    robot_goal_.x() = transformed_plan.back().pose.position.x;
+    robot_goal_.y() = transformed_plan.back().pose.position.y;
+  }
+  
   dx = robot_goal_.x() - robot_pose_.x();
   dy = robot_goal_.y() - robot_pose_.y();
 
