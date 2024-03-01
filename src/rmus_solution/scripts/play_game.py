@@ -332,8 +332,11 @@ if __name__ == '__main__':
 
 
     is_here = 0#判断这里有没有目标方块
+    last_rest_block = 3
 
     while rest_block > 0:
+        if last_rest_block == rest_block:
+            block_place_information = [{0},{0},{0},{0}]
         grip_target_block(1)
 
         rest_block = update_rest_block(1)
@@ -350,6 +353,7 @@ if __name__ == '__main__':
         if rest_block > 0:
             detect_area(3)
         rest_block = update_rest_block(1)
+        last_rest_block = rest_block
 
     rest_block = 3
     for i in range(1,7):
