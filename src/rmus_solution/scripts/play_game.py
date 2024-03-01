@@ -153,14 +153,18 @@ def add_area_information(area):#添加当前画面识别到的所有矿石
     img_switch_mode(11)
     blockinfo = rospy.wait_for_message("/all_detect_ID", UInt8MultiArray, timeout=1)
     block_place_information[area].update(blockinfo.data)
-    if 0 in block_place_information[area]:
-        block_place_information[area].discard(0)
-        print("已移除掉0")
-        print("block_place_information[",area,"]",block_place_information[area])
+
     update_block_location(area, block_place_information[area])
 
 def remove_area_information(block_id):
     block_place_information[blocks[block_id].area].discard(block_id)
+    if 0 in block_place_information[blocks[block_id].area]:
+        block_place_information[blocks[block_id].area].discard(0)
+        print("已移除掉0")
+        print("block_place_information[",blocks[block_id].area,"]",block_place_information[blocks[block_id].area])
+        if len(block_place_information[blocks[block_id].area]) == 0:
+            go_to_another_side(my_robot.location)
+            
     print("block_place_information[",blocks[block_id].area,"]=",block_place_information[blocks[block_id].area])
 
 def go_to(location):#仅仅是去那里
@@ -302,8 +306,8 @@ if __name__ == '__main__':
     img_switch_mode = rospy.ServiceProxy("/image_processor_switch_mode", switch)
     
 
-    navigation_start = rospy.wait_for_message('/odom', Odometry, timeout=7)
-    
+    # navigation_start = rospy.wait_for_message('/odom', Odometry, timeout=7)
+    rospy.sleep(1)
     rospy.Subscriber("/timeout", Bool, set_timeout)
 
     trim_res = trimer(0, "")
