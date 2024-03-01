@@ -31,7 +31,7 @@ def set_timeout(data):
 
 def tell_go_park_hard():
     # if rospy.Time.now().to_sec() - game_begin_time < 20:
-    if 300 - (rospy.Time.now().to_sec() - game_begin_time) < -9999:#记得改为20
+    if 300 - (rospy.Time.now().to_sec() - game_begin_time) < 20:#记得改为20
         print("距离游戏结束还有:",rospy.Time.now().to_sec() - game_begin_time,"将回到初始区")
         go_to(5)
         rospy.sleep(2000)
