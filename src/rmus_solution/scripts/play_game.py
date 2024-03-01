@@ -11,6 +11,9 @@ from std_msgs.msg import Bool
 import tf2_ros
 import tf2_geometry_msgs
 
+from nav_msgs.msg import Odometry
+
+
 timeout = False
 
 class block:
@@ -271,7 +274,7 @@ def get_block_pos_in_map(block_id):
 
     posestamped_in_cam.pose = blocks[block_id].pos_in_cam
     try:
-        posestamped_in_base = tfBuffer.transform(posestamped_in_cam, "map", rospy.Duration(0.01))
+        posestamped_in_base = tfBuffer.transform(posestamped_in_cam, "map", rospy.Duration(1.0))
         blocks[block_id].pos_in_map = posestamped_in_base.pose
     
         pub.publish(posestamped_in_base)        
@@ -299,8 +302,8 @@ if __name__ == '__main__':
     img_switch_mode = rospy.ServiceProxy("/image_processor_switch_mode", switch)
     
 
-
-
+    navigation_start = rospy.wait_for_message('/odom', Odometry, timeout=7)
+    
     rospy.Subscriber("/timeout", Bool, set_timeout)
 
     trim_res = trimer(0, "")
