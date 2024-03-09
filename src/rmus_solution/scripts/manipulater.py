@@ -4,7 +4,7 @@
 import threading
 import numpy as np
 from scipy.spatial.transform import Rotation as sciR
-
+from math import sqrt, atan2
 
 
 import rospy
@@ -14,20 +14,15 @@ from std_msgs.msg import Bool
 
 import tf2_ros
 import tf2_geometry_msgs
-from simple_pid import PID
+#from simple_pid import PID
 
 class manipulater:
     def __init__(self) -> None:
         self.arm_gripper_pub = rospy.Publisher("arm_gripper", Point, queue_size=2)
         self.arm_position_pub = rospy.Publisher("arm_position", Pose, queue_size=2)
-
         self.timeout_pub = rospy.Publisher("/timeout", Bool, queue_size=2)#发布微调是否超时
-        
-
         self.cmd_vel_puber = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
         rospy.Subscriber("/get_blockinfo", Pose, self.markerPoseCb, queue_size=1)
-
-
 
         self.current_marker_poses = None
         self.image_time_now = 0
@@ -39,33 +34,7 @@ class manipulater:
         self.service = rospy.Service(
             "/let_manipulater_work", graspsignal, self.trimerworkCallback
         )
-
-        self.kp = 10.0
-        self.kp = 10.0
-        self.ki = 0.5
-        self.kd = 0.0
-        self.x_dis_tar_1 = 0.348 #0.335
-        self.x_dis_tar_2 = 0.380 #0.395
-        self.x_dis_tar_3 = 0.380 #self.x_dis_tar_3 should equals to self.x_dis_tar_2
-        self.x_threshold = 0.010 # 可能需要减小，以提高精度
-        self.x_rough_threshold = 0.7
-        self.y_threshold_p = 0.018
-        self.y_threshold_n = 0.018
-        self.y_threshold = 0.015 # 可能需要减小，以提高精度
-        self.y_rough_threshold = 0.025
-        self.yaw_threshold = 0.3
-        self.adjust_speed_lowwer_limit = -0.1
-        self.adjust_speed_upper_limit = 0.1
-        self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_1, 0, 0]), None)
-        print(self.position_pid)
-
-        self.x_prepared = False
-        self.y_prepared = False
-        self.x_rough_prepared = False
-        self.y_rough_prepared = False
-        self.yaw_prepared = False
-
-
+        
     def markerPoseCb(self, msg):
         self.current_marker_poses = msg
         self.image_time_now = rospy.get_time()
@@ -99,7 +68,7 @@ class manipulater:
             ]
         )
         angle = sciR.from_quat(quat).as_euler("YXZ")[0]
-        #print("target_pos:", pos, "target_angle:", angle)
+        print("target_pos:", pos, "target_angle:", angle)
         return pos, angle
 
     def sendBaseVel(self, vel):
@@ -142,87 +111,46 @@ class manipulater:
         current_time1 = rospy.Time.now()
 
         if req.mode == 1:
-            rospy.loginfo("First trim then grasp")
-            rospy.loginfo("Trim to the right place")
+            rospy.loginfo("grasp preparing ...")
 
             self.open_gripper()
-            rospy.sleep(0.1)
 
-            self.x_prepared = False
-            self.y_prepared = False
-            self.x_rough_prepared = False
-            self.y_rough_prepared = False
-            self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_1, 0, 0]), None)
+            x_threshold = 0.01
+            y_threshold = 0.01
+            x_dis_tar = 0.335
+            angle_threshold = 0.1
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
                 if target_marker_pose is None:
                     continue
 
-
                 target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
                     target_marker_pose
                 )
-                cmd_vel = [0.0, 0.0, 0.0]
-                
-                cmd_vel = self.position_pid.__call__(np.array([target_pos[0], target_pos[1], target_angle]))
-                # print("cmd_vel before clip", cmd_vel)
-                cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
-                cmd_vel[0] = -cmd_vel[0]
-                cmd_vel[1] = -cmd_vel[1]
-
-                if self.x_rough_prepared and self.y_rough_prepared:
-                    if not self.y_prepared:
-                        cmd_vel[0] = 0
-                        cmd_vel[2] = 0
-                        print("preparing y axis...")
-                    # elif not self.yaw_prepared:
-                    #     cmd_vel[0] = 0
-                    #     cmd_vel[1] = 0                
-                    #     print("preparing yaw...")
-                    elif not self.x_prepared:
-                        cmd_vel[1] = 0
-                        cmd_vel[2] = 0                
-                        print("preparing x axis...")                    
-                else :
-                    if not self.y_rough_prepared:
-                        cmd_vel[0] = 0
-                        cmd_vel[2] = 0
-                        print("preparing rough y axis...")
-                    elif not self.x_rough_prepared:
-                        cmd_vel[1] = 0
-                        cmd_vel[2] = 0                
-                        print("preparing rough x axis...")
-
-                if np.abs(target_pos[0] - self.x_dis_tar_1) <= self.x_threshold:
-                    self.x_prepared = True
-                    self.x_rough_prepared = True
-                elif np.abs(target_pos[0]) <= self.x_rough_threshold:
-                    self.x_prepared = False
-                    self.x_rough_prepared = True                
-                else :
-                    self.x_prepared = False
-                    self.x_rough_prepared = False                
-
-                if np.abs(target_pos[1] - 0.0) <= self.y_threshold:
-                    self.y_prepared = True
-                    self.y_rough_prepared = True
-                elif np.abs(target_pos[1] - 0.0) <= self.y_rough_threshold:
-                    self.y_prepared = False
-                    self.y_rough_prepared = True
-                else:
-                    self.y_prepared = False
-                    self.y_rough_prepared = False
-
-                # if np.abs(target_angle - 0) <= self.yaw_threshold:
-                #     self.yaw_prepared = True
-                # else :
-                #     self.yaw_prepared = False
-
-                self.sendBaseVel(cmd_vel)
-                
-                if self.x_prepared and self.y_prepared:
+                # 追踪停车位置，按照0.5的减速比减速x速度
+                cmd_vel = [0.0, 0.0, 0.0]                
+                cmd_vel[0]= 0.5*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))
+                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.5) # liner.x超速限制在[0.1,0.5]
+                cmd_vel[1] = 10*target_pos[1]  # liner.y
+                cmd_vel[1] = np.clip(cmd_vel[1], -0.2, 0.2) # 超速限制在速度范围内
+                cmd_vel[2] = -4*target_angle  # angle.z
+                cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
+                #cmd_vel[2]= 4 * atan2(target_pos[1],target_pos[0]) # 方向角角速度控制
+                print("target.liner.x = ",cmd_vel[0],  "  yaw angle.z speed = ", cmd_vel[2])
+                               
+                # 如果距离太近，后退小车
+                if (target_pos[0] - x_dis_tar) < -x_threshold:
+                    cmd_vel = [-0.1, 0.0, 0.0]
+                elif np.abs(target_pos[0] - x_dis_tar) <= x_threshold and (
+                    np.abs(target_pos[1]) <= y_threshold
+                    and np.abs(target_angle) <= angle_threshold
+                ):
                     cmd_vel = [0.0, 0.0, 0.0]
+                self.sendBaseVel(cmd_vel)
+                if np.abs(target_pos[0] - x_dis_tar) <= x_threshold and (
+                    np.abs(target_pos[1]) <= y_threshold
+                ):
                     pose = Pose()
                     pose.position.x = 0.19
                     pose.position.y = -0.08
@@ -232,7 +160,7 @@ class manipulater:
                     rospy.sleep(1.0)
                     self.arm_position_pub.publish(pose)
                     rospy.sleep(1.0)
-                    rospy.loginfo("Place: reach the goal for placing.")
+                    rospy.loginfo("Place: reach the goal for grasping.")
                     break
 
                 current_time2 = rospy.Time.now()
@@ -245,13 +173,16 @@ class manipulater:
 
                 rate.sleep()
 
-            target_marker_pose = self.current_marker_poses
+            target_marker_pose = self.getTargetPosAndAngleInBaseLinkFrame(
+                    target_marker_pose
+                )
             self.close_gripper()
             rospy.sleep(1.0)
 
             self.close_gripper()
             rospy.sleep(1.0)
-            self.reset_arm()
+            reset_thread = threading.Thread(target=self.reset_arm)
+            reset_thread.start()
 
             self.sendBaseVel([-0.3, 0.0, 0.0])
             rospy.sleep(0.4)
@@ -262,16 +193,14 @@ class manipulater:
             return resp
 
         elif req.mode == 2:
-            rospy.loginfo("First trim then place")
-
-            self.x_prepared = False
-            self.y_prepared = False
-            self.x_rough_prepared = False
-            self.y_rough_prepared = False
-            self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_2, 0, 0]), None)
-
+            rospy.loginfo("level 1 preparing ...")
+            
             self.pre()
-            theta = 0.10
+
+            x_threshold = 0.01
+            y_threshold = 0.01
+            x_dis_tar = 0.385
+            angle_threshold = 0.1
 
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
@@ -281,50 +210,31 @@ class manipulater:
                 target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
                     target_marker_pose
                 )
-                cmd_vel = [0.0, 0.0, 0.0]
 
-                cmd_vel = self.position_pid.__call__(np.array([target_pos[0], target_pos[1], target_angle]))
-                cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
-                cmd_vel[0] = -cmd_vel[0]
-                cmd_vel[1] = -cmd_vel[1]
-                # cmd_vel[2] = 0
-
-                if self.y_prepared != True:
-                    cmd_vel[0] = 0
-                    cmd_vel[2] = 0
-                    #print("preparing y axis...")
-
-                if self.yaw_prepared != True and self.y_prepared == True:
-                    cmd_vel[0] = 0
-                    cmd_vel[1] = 0                
-                    #print("preparing yaw...")
-
-                if self.x_prepared != True and self.y_prepared == True and self.yaw_prepared == True:
-                    cmd_vel[1] = 0
-                    cmd_vel[2] = 0                
-                    #print("preparing x axis...")
-
-                if np.abs(target_pos[0] - self.x_dis_tar_2) <= self.x_threshold:
-                    self.x_prepared = True
-                else :
-                    self.x_prepared = False
+                cmd_vel = [0.0, 0.0, 0.0] 
+                # 追踪停车位置，按照0.5的减速比减速x速度               
+                cmd_vel[0] = 0.5*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
+                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.5) # 超速限制在速度范围内
+                cmd_vel[1] = 10*target_pos[1]  # liner.y
+                cmd_vel[1] = np.clip(cmd_vel[1], -0.2, 0.2) # 超速限制在速度范围内
+                cmd_vel[2] = -4*target_angle  # angle.z
+                cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
+                print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
                 
-                if (target_pos[1] - 0.0) <= self.y_threshold_p and (0.0 - target_pos[1]) <= self.y_threshold_n:
-                    self.y_prepared = True
-                else :
-                    self.y_prepared = False
-
-                if np.abs(target_angle - 0) <= self.yaw_threshold:
-                    self.yaw_prepared = True
-                else :
-                    self.yaw_prepared = False
-
+                # 如果距离太近，后退小车
+                if target_pos[0]-x_dis_tar < -x_threshold:
+                    cmd_vel = [-0.1,0,0]
+                elif (np.abs(target_pos[0]-x_dis_tar) <= x_threshold
+                        and np.abs(target_pos[1]) <= y_threshold
+                        and np.abs(target_angle) <= angle_threshold
+                    ):
+                        cmd_vel = [0.0, 0.0, 0.0]
                 self.sendBaseVel(cmd_vel)
 
-                if self.x_prepared == True and self.y_prepared == True and self.yaw_prepared == True:
+                if np.abs(target_pos[0]-x_dis_tar) <= x_threshold and (
+                    np.abs(target_pos[1]) <= y_threshold
+                ):
                     rospy.loginfo("Trim well in the all dimention, going open loop")
-                    self.sendBaseVel([0.0, 0.0, 0.0])
-                    rospy.sleep(1.0)
                     self.sendBaseVel([0.25, 0.0, 0.0])
                     rospy.sleep(0.3)
                     self.sendBaseVel([0.25, 0.0, 0.0])
@@ -335,8 +245,6 @@ class manipulater:
                 rate.sleep()
 
             rospy.loginfo("Trim well in the horizon dimention")
-
-            
 
             target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
                 self.current_marker_poses
@@ -357,16 +265,15 @@ class manipulater:
             return resp
     
         elif req.mode == 3:
-            rospy.loginfo("First trim then place")
-            
-            self.x_prepared = False
-            self.y_prepared = False
-            self.x_rough_prepared = False
-            self.y_rough_prepared = False
-            self.position_pid = PID(self.kp, self.ki, self.kd, np.array([self.x_dis_tar_3, 0, 0]), None)
+            rospy.loginfo("level 2 preparing ...")
             
             self.pre2()
-
+            
+            x_threshold = 0.01
+            y_threshold = 0.01
+            x_dis_tar = 0.385
+            angle_threshold = 0.1
+            
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
                 if target_marker_pose is None:
@@ -375,47 +282,30 @@ class manipulater:
                 target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
                     target_marker_pose
                 )
-                cmd_vel = [0.0, 0.0, 0.0]
 
-                cmd_vel = self.position_pid.__call__(np.array([target_pos[0], target_pos[1], target_angle]))
-                cmd_vel = np.clip(cmd_vel, self.adjust_speed_lowwer_limit, self.adjust_speed_upper_limit)
-                cmd_vel[0] = -cmd_vel[0]
-                cmd_vel[1] = -cmd_vel[1]
-                # cmd_vel[2] = 0
-
-                if self.y_prepared != True:
-                    cmd_vel[0] = 0
-                    cmd_vel[2] = 0
-                    #print("preparing y axis...")
-
-                if self.yaw_prepared != True and self.y_prepared == True:
-                    cmd_vel[0] = 0
-                    cmd_vel[1] = 0                
-                    #print("preparing yaw...")
-
-                if self.x_prepared != True and self.y_prepared == True and self.yaw_prepared == True:
-                    cmd_vel[1] = 0
-                    cmd_vel[2] = 0                
-                    #print("preparing x axis...")
-
-                if np.abs(target_pos[0] - self.x_dis_tar_2) <= self.x_threshold:
-                    self.x_prepared = True
-                else :
-                    self.x_prepared = False
+                cmd_vel = [0.0, 0.0, 0.0]                
+                # 追踪停车位置，按照0.5的减速比减速x速度               
+                cmd_vel[0] = 0.5*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
+                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.5) # 超速限制在速度范围内
+                cmd_vel[1] = 10*target_pos[1]  # liner.y
+                cmd_vel[1] = np.clip(cmd_vel[1], -0.2, 0.2) # 超速限制在速度范围内
+                cmd_vel[2] = -4*target_angle  # angle.z
+                cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
+                print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
                 
-                if (target_pos[1] - 0.0) <= self.y_threshold_p and (0.0 - target_pos[1]) <= self.y_threshold_n:
-                    self.y_prepared = True
-                else :
-                    self.y_prepared = False
-
-                if np.abs(target_angle - 0) <= self.yaw_threshold:
-                    self.yaw_prepared = True
-                else :
-                    self.yaw_prepared = False
-
+                # 如果距离太近，后退小车
+                if target_pos[0]-x_dis_tar < -x_threshold:
+                    cmd_vel = [-0.1,0,0]
+                elif (np.abs(target_pos[0]-x_dis_tar) <= x_threshold
+                        and np.abs(target_pos[1]) <= y_threshold
+                        and np.abs(target_angle) <= angle_threshold
+                    ):
+                        cmd_vel = [0.0, 0.0, 0.0]
                 self.sendBaseVel(cmd_vel)
 
-                if self.x_prepared == True and self.y_prepared == True and self.yaw_prepared == True:
+                if np.abs(target_pos[0] - x_dis_tar) <= x_threshold and (
+                    np.abs(target_pos[1]) <= y_threshold
+                ):
                     rospy.loginfo("Trim well in the all dimention, going open loop")
                     self.sendBaseVel([0.0, 0.0, 0.0])
                     rospy.sleep(1.0)
@@ -429,8 +319,6 @@ class manipulater:
                 rate.sleep()
             
             rospy.loginfo("Trim well in the horizon dimention")
-
-            
 
             target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
                 self.current_marker_poses
@@ -450,7 +338,153 @@ class manipulater:
             resp.response = "Successfully Place"
             return resp
         
-        return resp
+        elif req.mode == 4:
+            rospy.loginfo("level 3 preparing ...")
+            
+            self.pre3()
+            
+            x_threshold = 0.01
+            y_threshold = 0.01
+            x_dis_tar = 0.385
+            angle_threshold = 0.1
+            
+            while not rospy.is_shutdown():
+                target_marker_pose = self.current_marker_poses
+                if target_marker_pose is None:
+                    continue
+                
+                target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
+                    target_marker_pose
+                )
+
+                cmd_vel = [0.0, 0.0, 0.0]                
+                # 追踪停车位置，按照0.5的减速比减速x速度               
+                cmd_vel[0] = 0.5*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
+                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.5) # 超速限制在速度范围内
+                cmd_vel[1] = 10*target_pos[1]  # liner.y
+                cmd_vel[1] = np.clip(cmd_vel[1], -0.2, 0.2) # 超速限制在速度范围内
+                cmd_vel[2] = -4*target_angle  # angle.z
+                cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
+                print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
+                
+                # 如果距离太近，后退小车
+                if target_pos[0]-x_dis_tar < -x_threshold:
+                    cmd_vel = [-0.1,0,0]
+                elif (np.abs(target_pos[0]-x_dis_tar) <= x_threshold
+                        and np.abs(target_pos[1]) <= y_threshold
+                        and np.abs(target_angle) <= angle_threshold
+                    ):
+                        cmd_vel = [0.0, 0.0, 0.0]
+                self.sendBaseVel(cmd_vel)
+
+                if np.abs(target_pos[0] - x_dis_tar) <= x_threshold and (
+                    np.abs(target_pos[1]) <= y_threshold
+                ):
+                    rospy.loginfo("Trim well in the all dimention, going open loop")
+                    self.sendBaseVel([0.0, 0.0, 0.0])
+                    rospy.sleep(1.0)
+                    self.sendBaseVel([0.25, 0.0, 0.0])
+                    rospy.sleep(0.3)
+                    self.sendBaseVel([0.25, 0.0, 0.0])
+                    rospy.sleep(0.3)
+                    self.sendBaseVel([0.0, 0.0, 0.0])
+                    rospy.loginfo("Place: reach the goal for placing.")
+                    break
+                rate.sleep()
+            
+            rospy.loginfo("Trim well in the horizon dimention")
+
+            target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
+                self.current_marker_poses
+            )
+            self.sendBaseVel([0.0, 0.0, 0.0])
+            rospy.sleep(1.0)
+            self.open_gripper()
+            rospy.sleep(1.0)
+            reset_thread = threading.Thread(target=self.reset_arm)
+            reset_thread.start()
+
+            self.sendBaseVel([-0.3, 0.0, 0.0])
+            rospy.sleep(0.6)
+            self.sendBaseVel([0.0, 0.0, 0.0])
+
+            resp.res = True
+            resp.response = "Successfully Place"
+            return resp
+        
+        elif req.mode == 5:
+            rospy.loginfo("level 4 preparing ...")
+            
+            self.pre4()
+            
+            x_threshold = 0.01
+            y_threshold = 0.01
+            x_dis_tar = 0.385
+            angle_threshold = 0.1
+            
+            while not rospy.is_shutdown():
+                target_marker_pose = self.current_marker_poses
+                if target_marker_pose is None:
+                    continue
+                
+                target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
+                    target_marker_pose
+                )
+
+                cmd_vel = [0.0, 0.0, 0.0]                
+                # 追踪停车位置，按照0.5的减速比减速x速度               
+                cmd_vel[0] = 0.5*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
+                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.5) # 超速限制在速度范围内
+                cmd_vel[1] = 10*target_pos[1]  # liner.y
+                cmd_vel[1] = np.clip(cmd_vel[1], -0.2, 0.2) # 超速限制在速度范围内
+                cmd_vel[2] = -4*target_angle  # angle.z
+                cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
+                print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
+                
+                # 如果距离太近，后退小车
+                if target_pos[0]-x_dis_tar < -x_threshold:
+                    cmd_vel = [-0.1,0,0]
+                elif (np.abs(target_pos[0]-x_dis_tar) <= x_threshold
+                        and np.abs(target_pos[1]) <= y_threshold
+                        and np.abs(target_angle) <= angle_threshold
+                    ):
+                        cmd_vel = [0.0, 0.0, 0.0]
+                self.sendBaseVel(cmd_vel)
+
+                if np.abs(target_pos[0] - x_dis_tar) <= x_threshold and (
+                    np.abs(target_pos[1]) <= y_threshold
+                ):
+                    rospy.loginfo("Trim well in the all dimention, going open loop")
+                    self.sendBaseVel([0.0, 0.0, 0.0])
+                    rospy.sleep(1.0)
+                    self.sendBaseVel([0.25, 0.0, 0.0])
+                    rospy.sleep(0.3)
+                    self.sendBaseVel([0.25, 0.0, 0.0])
+                    rospy.sleep(0.3)
+                    self.sendBaseVel([0.0, 0.0, 0.0])
+                    rospy.loginfo("Place: reach the goal for placing.")
+                    break
+                rate.sleep()
+            
+            rospy.loginfo("Trim well in the horizon dimention")
+
+            target_pos, target_angle = self.getTargetPosAndAngleInBaseLinkFrame(
+                self.current_marker_poses
+            )
+            self.sendBaseVel([0.0, 0.0, 0.0])
+            rospy.sleep(1.0)
+            self.open_gripper()
+            rospy.sleep(1.0)
+            reset_thread = threading.Thread(target=self.reset_arm)
+            reset_thread.start()
+
+            self.sendBaseVel([-0.3, 0.0, 0.0])
+            rospy.sleep(0.6)
+            self.sendBaseVel([0.0, 0.0, 0.0])
+
+            resp.res = True
+            resp.response = "Successfully Place"
+            return resp
 
     def open_gripper(self):
         open_gripper_msg = Point()
@@ -484,28 +518,28 @@ class manipulater:
         rospy.loginfo("<manipulater>: now prepare to grip")
         pose = Pose()
         pose.position.x = 0.21
-        pose.position.y = -0.036
+        pose.position.y = -0.037
         self.arm_position_pub.publish(pose)
         
     def pre2(self):
         rospy.loginfo("<manipulater>: level 2 place")
         pose = Pose()
         pose.position.x = 0.21
-        pose.position.y = 0.014
+        pose.position.y = 0.013
         self.arm_position_pub.publish(pose)
         
     def pre3(self):
         rospy.loginfo("<manipulater>: level 3 place")
         pose = Pose()
         pose.position.x = 0.21
-        pose.position.y = 0.065
+        pose.position.y = 0.063
         self.arm_position_pub.publish(pose)
     
     def pre4(self):
         rospy.loginfo("<manipulater>: level 4 place")
         pose = Pose()
         pose.position.x = 0.21
-        pose.position.y = 0.115
+        pose.position.y = 0.113
         self.arm_position_pub.publish(pose)
 
 
