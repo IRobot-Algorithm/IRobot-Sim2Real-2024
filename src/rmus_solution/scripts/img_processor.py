@@ -117,7 +117,7 @@ class Processor:
                 self.pub_b.publish(self.latest_pose)
                 # self.latest_pose.position = None
                 # self.latest_pose.orientation = None
-            #print("self.all_detectd_ID = " +str(self.all_detectd_ID))
+            print("self.all_detectd_ID = " +str(self.all_detectd_ID))
             self.pub_all_ID.publish(UInt8MultiArray(data=self.all_detectd_ID))
             #print("publish pose once used: ", int((rospy.Time.now().to_nsec() - t_begin)/1e6), "ms")
         elif locked_current_mode == 0:
@@ -134,7 +134,7 @@ class Processor:
                 # self.latest_pose.orientation = None
             
             
-            #print("self.all_detectd_ID = " +str(self.all_detectd_ID))
+            print("self.all_detectd_ID = " +str(self.all_detectd_ID))
             self.pub_all_ID.publish(UInt8MultiArray(data=self.all_detectd_ID))
         else:
             assert False

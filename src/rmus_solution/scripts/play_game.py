@@ -11,6 +11,7 @@ from std_msgs.msg import Bool
 import tf2_ros
 import tf2_geometry_msgs
 
+import random
 
 
 timeout = False
@@ -245,13 +246,6 @@ def detect_area(area):#对指定矿区进行一次抓取、放置的全过程。
         if grip():
             put()
             return True
-        
-        # if my_robot.location == 32:
-        #     go_to_another_side(my_robot.location)
-        #     if grip():
-        #         put()
-        #         return True     
-
 
     elif result == True:
         put()
@@ -261,33 +255,9 @@ def detect_area(area):#对指定矿区进行一次抓取、放置的全过程。
     
 
 def grip_specified_block(block):
-    # go_to(block.area*10+1)
-    # img_switch_mode(11)#此模式，便于识别ID以加入到集合里 
-
-    # add_area_information(block.area)
-
     result = grip(block)
-    # if result == False and (my_robot.location == 11 or my_robot.location == 21 or my_robot.location == 31):
-    #     go_to_another_side(block.area*10+1)
-    #     if grip():
-    #         put()
-    #         return True
-    # elif result == True:
-    #     put()
-    #     return True
-    # else:
-    #     return False
     return result
     
-def update_rest_block(mode):
-    sum = 0
-    for i in range(1,7):
-        if blocks[i].mode == mode and blocks[i].is_set == 0:
-            sum+=1
-    return sum
-
-
-
 def init_this_node():
     rospy.init_node("gamecore_node")
     # game_begin_time = rospy.Time.now().to_sec()
@@ -339,12 +309,12 @@ def get_block_pos_in_map(block_id):
     except:
         rospy.logerr("无法进行TF转换")
         blocks[block_id].pos_in_map = None
-
-def grip_target_block(mode):#看一下有没有目标矿物
-        for i in range(1, 7):
-            if blocks[i].mode == mode and blocks[i].area != -1 and my_robot.location//10 == blocks[i].area:
-                grip_specified_block(blocks[i])
-
+def RunEverywhere():#在地图里到处跑
+    img_switch_mode(11)
+    while True:
+        target = [11,12,13,21,22,23,31,32,9,5,7]
+        num = random.randint(0, 10)
+        go_to(target[num])
 if __name__ == '__main__':
     init_this_node()
     game_begin_time = rospy.Time.now().to_sec()
@@ -390,9 +360,9 @@ if __name__ == '__main__':
     temporary_storage_info = [0, 0, 0, 0]#储存暂存区的方块ID
 
     is_here = 0#判断这里有没有目标方块
-
     while rest_block > 0:
-
+        if rest_block == 6 and rospy.Time.now().to_sec()-game_begin_time > 100:
+            RunEverywhere()
         if rest_block > 0:
             detect_area(1)
 
@@ -402,7 +372,7 @@ if __name__ == '__main__':
         if rest_block > 0:
             detect_area(3)
     game_rest_time = rospy.Time.now().to_sec()-game_begin_time
-    print("现在还剩:", 300 - game_rest_time,"秒")
+    print("目前耗时:", game_rest_time,"秒")
     for i in range(1,4):
         while True:
             go_to(40+i)
