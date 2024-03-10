@@ -1,3 +1,27 @@
+# 参赛情况
+
+### 1. 比赛详情
+
+[RoboMaster University Sim2Real Challenge 2024](https://github.com/AIR-DISCOVER/ICRA2024-Sim2Real-RM)
+
+### 2. 参赛人员
+
+队长：[Weilv Chi](https://github.com/shitoujie)
+
+导航：[Yongqian_Wu](https://github.com/niuoruo)
+
+识别：[Zengyang_LI](https://github.com/S-Canister)
+
+机械臂：[Tianxiao_Zhang](https://github.com/xiaotudou33)
+
+决策：[Zhibo_Duan](https://github.com/BoZhiStudying233)
+
+### 3. 获奖情况
+
+仿真赛成功提交晋级
+
+
+
 # ICRA Robomaster Sim2Real Challenge Client Baseline
 
 ## Hardware - EP
