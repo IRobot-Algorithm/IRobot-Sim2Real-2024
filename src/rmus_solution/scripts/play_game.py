@@ -188,7 +188,7 @@ def put_on_floor():
 
     print("前往矿石暂存点",temporary_storage_num)
     go_to(40+temporary_storage_num)#41 42 43为相应坐标点
-    trimer(0,"")#让张天晓给我写一个无脑放置
+    trimer(20,"")#让张天晓给我写一个无脑放置
     blocks[my_robot.block].is_put = 1
     blocks[my_robot.block].mode = 1 + temporary_storage_num
     temporary_storage_info[temporary_storage_num] = my_robot.block
@@ -375,7 +375,7 @@ if __name__ == '__main__':
     print("目前耗时:", game_rest_time,"秒")
     for i in range(1,4):
         while True:
-            go_to(40+i)
+            go_to(50+i)
             img_switch_mode(temporary_storage_info[i])
             if grip_specified_block(temporary_storage_info[i]):
                 break

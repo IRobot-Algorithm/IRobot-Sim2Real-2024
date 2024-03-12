@@ -90,20 +90,43 @@ class manipulater:
             resp.res = True
             resp.response = "reset arm position and open gripper"
             return resp
+        elif req.mode == 20:
+            rospy.loginfo("temp storage place ...")
+            
+            #self.sendBaseVel([0.25, 0.0, 0.0])
+            #rospy.sleep(0.3)
+            #self.sendBaseVel([0.0, 0.0, 0.0])
+            #rospy.sleep(0.4)
+            pose = Pose()
+            pose.position.x = 0.19
+            pose.position.y = -0.079
+            self.arm_position_pub.publish(pose)
+            rospy.sleep(1.9)
+            self.open_gripper()
+            rospy.sleep(0.3)                
+            
+            reset_thread = threading.Thread(target=self.reset_arm)
+            reset_thread.start()
+            
+            resp = graspsignalResponse()
+            resp.res = True
+            resp.response = "Successfully temp Place"
+            return resp
 
-        initial_time = rospy.get_time()
-        while rospy.get_time() - self.image_time_now > 0.1:
-            rospy.loginfo("latency detected!")
-            if rospy.get_time() - initial_time > 3.0:
-                self.sendBaseVel([-0.2, 0.0, 0.0])
-                rospy.sleep(0.5)
-                self.sendBaseVel([-0.2, 0.0, 0.0])
-            if rospy.get_time() - initial_time > 6.0:
-                resp = graspsignalResponse()
-                resp.res = True
-                resp.response = "Successfully Grasp fake"
-                return resp
-            rospy.sleep(0.1)
+        # 此部分内容无用
+        #initial_time = rospy.get_time()
+        #while rospy.get_time() - self.image_time_now > 0.1:
+        #    rospy.loginfo("latency detected!")
+        #    if rospy.get_time() - initial_time > 3.0:
+        #        self.sendBaseVel([-0.2, 0.0, 0.0])
+        #        rospy.sleep(0.5)
+        #        self.sendBaseVel([-0.2, 0.0, 0.0])
+        #    if rospy.get_time() - initial_time > 6.0:
+        #        resp = graspsignalResponse()
+        #        resp.res = True
+        #        resp.response = "Successfully Grasp fake"
+        #        return resp
+        #    rospy.sleep(0.1)
 
         rate = rospy.Rate(self.ros_rate)
 
@@ -117,7 +140,7 @@ class manipulater:
 
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.335
+            x_dis_tar = 0.348
             angle_threshold = 0.1
 
             while not rospy.is_shutdown():
@@ -164,7 +187,7 @@ class manipulater:
                     break
 
                 current_time2 = rospy.Time.now()
-                if current_time2.secs - current_time1.secs > 13:#如果微调时间超过xx秒
+                if current_time2.secs - current_time1.secs > 9:#如果微调时间超过xx秒
                     rospy.logerr("微调时间过长")
                     self.timeout_pub.publish(True)
                     rospy.sleep(2)
@@ -419,7 +442,7 @@ class manipulater:
             
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.385
+            x_dis_tar = 0.365
             angle_threshold = 0.1
             
             while not rospy.is_shutdown():
@@ -518,28 +541,28 @@ class manipulater:
         rospy.loginfo("<manipulater>: now prepare to grip")
         pose = Pose()
         pose.position.x = 0.21
-        pose.position.y = -0.037
+        pose.position.y = -0.038
         self.arm_position_pub.publish(pose)
         
     def pre2(self):
         rospy.loginfo("<manipulater>: level 2 place")
         pose = Pose()
-        pose.position.x = 0.21
-        pose.position.y = 0.013
+        pose.position.x = 0.206
+        pose.position.y = 0.012
         self.arm_position_pub.publish(pose)
         
     def pre3(self):
         rospy.loginfo("<manipulater>: level 3 place")
         pose = Pose()
-        pose.position.x = 0.21
-        pose.position.y = 0.063
+        pose.position.x = 0.206
+        pose.position.y = 0.062
         self.arm_position_pub.publish(pose)
     
     def pre4(self):
         rospy.loginfo("<manipulater>: level 4 place")
         pose = Pose()
-        pose.position.x = 0.21
-        pose.position.y = 0.113
+        pose.position.x = 0.206
+        pose.position.y = 0.114
         self.arm_position_pub.publish(pose)
 
 
