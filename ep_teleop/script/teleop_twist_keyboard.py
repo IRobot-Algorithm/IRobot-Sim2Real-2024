@@ -74,6 +74,7 @@ actionBindings={
         '5':(0),
         '6':(0),
         '7':(0),
+        '8':(0),
     }
 
 
@@ -222,8 +223,8 @@ if __name__=="__main__":
                     pub_thread.publisher_pose.publish(pose)
                 elif key == '2':
                     pose = Pose()
-                    pose.position.x = 0.19
-                    pose.position.y = 0.05
+                    pose.position.x = 0.1
+                    pose.position.y = 0.12
                     pub_thread.publisher_pose.publish(pose)
                 elif key == '3':
                     point = Point()
@@ -236,18 +237,24 @@ if __name__=="__main__":
                 elif key == '5':
                     pose = Pose()
                     pose.position.x = 0.19
-                    pose.position.y = -0.035
+                    pose.position.y = -0.037
                     pub_thread.publisher_pose.publish(pose)
                 elif key == '6':
                     pose = Pose()
                     pose.position.x = 0.19
-                    pose.position.y = 0.015
+                    pose.position.y = 0.012
                     pub_thread.publisher_pose.publish(pose)
                 elif key == '7':
                     pose = Pose()
                     pose.position.x = 0.19
-                    pose.position.y = 0.065
+                    pose.position.y = 0.062
                     pub_thread.publisher_pose.publish(pose)
+                elif key == '8':
+                    pose = Pose()
+                    pose.position.x = 0.19
+                    pose.position.y = 0.112
+                    pub_thread.publisher_pose.publish(pose)
+                
 
             else:
                 # Skip updating cmd_vel if key timeout and robot already
