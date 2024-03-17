@@ -3,6 +3,8 @@
 import rospy
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Point
+from geometry_msgs.msg import Quaternion
 from std_msgs.msg import UInt8MultiArray
 from sensor_msgs.msg import Image, CameraInfo
 from rmus_solution.srv import switch, switchResponse
@@ -243,7 +245,10 @@ class Processor:
             best_id = area_list.index(max(area_list))
         else:
             pose_list.clear()
-            self.latest_pose = Pose()
+            self.latest_pose = Pose(
+                position=Point(x=0.0, y=0.0, z=0.0),
+                orientation=Quaternion(x=0.0033,y=6.9877,z=0.0108,w=0.9999)
+            )
             self.uint32data[blockid - 1] = [-1]
             return
         try:
