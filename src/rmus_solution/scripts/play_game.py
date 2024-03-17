@@ -45,9 +45,15 @@ def tell_go_park_hard():
         print("total time:",rospy.Time.now().to_sec() - game_begin_time,"将回到初始区")
         rospy.sleep(2000)
 
-def catch():
+def catch(try_time):
     tell_go_park_hard()
-    trimer(1,"")
+    if try_time == 5:     
+        trimer(11,"")
+    elif try_time == 6:
+        trimer(12,"")
+    else:
+        trimer(1,"")
+    
     global timeout
     if timeout.data == True:
         rospy.logerr("微调超时,放弃此次抓取")
@@ -90,14 +96,15 @@ def grip(block = -1):
                 img_switch_mode(i)
                 if is_obstructed_by_wall(i):
                     return False
-                if catch():
+                times = 0
+                if catch(times):
                     return False
                 rospy.sleep(1)
                 times = 1
-                while tell_is_here(i) and times < 5 :# 尝试五次抓取
+                while tell_is_here(i) and times < 6 :# 尝试五次抓取
                     times = times + 1
                     rospy.logerr("抓取失败，将进行第"+str(times)+"抓取")
-                    if catch(): 
+                    if catch(times): 
                         return False
                     rospy.sleep(1)#给抓取好方块留出时间
                     
@@ -112,14 +119,15 @@ def grip(block = -1):
     else: #即如果是抓特定方块的话
         print("这里有目标方块"+ str(block))
         img_switch_mode(block)
-        if catch():
+        times = 0
+        if catch(times):
             return False
         rospy.sleep(1)
         times = 1
-        while tell_is_here(block) and times < 5 :# 尝试五次抓取
+        while tell_is_here(block) and times < 6 :# 尝试五次抓取
             times = times + 1
             rospy.logerr("抓取失败，将进行第"+str(times)+"抓取")
-            if catch(): 
+            if catch(times): 
                 return False
             rospy.sleep(1)#给抓取好方块留出时间
             
