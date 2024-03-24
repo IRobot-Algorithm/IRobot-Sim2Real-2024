@@ -119,7 +119,7 @@ class Processor:
                 self.pub_b.publish(self.latest_pose)
                 # self.latest_pose.position = None
                 # self.latest_pose.orientation = None
-            print("self.all_detectd_ID = " +str(self.all_detectd_ID))
+            #print("self.all_detectd_ID = " +str(self.all_detectd_ID))
             self.pub_all_ID.publish(UInt8MultiArray(data=self.all_detectd_ID))
             #print("publish pose once used: ", int((rospy.Time.now().to_nsec() - t_begin)/1e6), "ms")
         elif locked_current_mode == 0:
@@ -241,16 +241,159 @@ class Processor:
 
         pose_list = [pose_aruco_2_ros(r, t) for t, r in zip(tvec_list, rvec_list)]
 
-        if id_list != []:
-            best_id = area_list.index(max(area_list))
-        else:
-            pose_list.clear()
-            self.latest_pose = Pose(
-                position=Point(x=0.0, y=0.0, z=0.0),
-                orientation=Quaternion(x=0.0033,y=6.9877,z=0.0108,w=0.9999)
+        good_list = []
+        if (
+            last_info is not None
+            and self.this_image_time_ms - last_info[-1] < 100
+            and self.this_image_time_ms - last_info[-1] > 0
+        ):
+            last_area = last_info[9]
+            last_center_x = (
+                last_info[1] + last_info[3] + last_info[5] + last_info[7]
+            ) / 4.0
+            last_center_y = (
+                last_info[2] + last_info[4] + last_info[6] + last_info[8]
+            ) / 4.0
+            last_edge = (
+                np.sqrt(
+                    (last_info[1] - last_info[3]) * (last_info[1] - last_info[3])
+                    + (last_info[2] - last_info[4]) * (last_info[2] - last_info[4])
+                )
+                + np.sqrt(
+                    (last_info[3] - last_info[5]) * (last_info[3] - last_info[5])
+                    + (last_info[4] - last_info[6]) * (last_info[4] - last_info[6])
+                )
+                + np.sqrt(
+                    (last_info[5] - last_info[7]) * (last_info[5] - last_info[7])
+                    + (last_info[6] - last_info[8]) * (last_info[6] - last_info[8])
+                )
+                + np.sqrt(
+                    (last_info[7] - last_info[1]) * (last_info[7] - last_info[1])
+                    + (last_info[8] - last_info[2]) * (last_info[8] - last_info[2])
+                )
             )
-            self.uint32data[blockid - 1] = [-1]
+            last_edge /= 4.0
+            for i in range(len(id_list)):
+                if id_list[i] != blockid:
+                    continue
+                if np.abs(area_list[i] - last_area) / float(area_list[i]) > 0.4:
+                    continue
+                center_x = np.mean([quads_list[i][_, 0, 0] for _ in range(4)])
+                center_y = np.mean([quads_list[i][_, 0, 1] for _ in range(4)])
+                dist_diff = np.sqrt(
+                    (center_x - last_center_x) * (center_x - last_center_x)
+                    + (center_y - last_center_y) * (center_y - last_center_y)
+                )
+                if dist_diff > last_edge * 0.5:
+                    continue
+                good_list.append(i)
+        #if id_list != []:
+        #    best_id = area_list.index(max(area_list))
+        else:
+            for i in range(len(id_list)):
+                if id_list[i] == blockid:
+                    good_list.append(i)
+        if last_info is not None and self.this_image_time_ms - last_info[-1] < 0:
+            assert False
+
+        if len(good_list) == 0 and last_info is None:
+            #pose_list.clear()
+            #self.latest_pose = Pose(
+            #    position=Point(x=0.0, y=0.0, z=0.0),
+            #    orientation=Quaternion(x=0.0033,y=6.9877,z=0.0108,w=0.9999)
+            #)
+            #self.uint32data[blockid - 1] = [-1]
             return
+        elif len(good_list) == 0 and last_info is not None:
+            old_quads = np.array(
+                [
+                    [[last_info[1], last_info[2]]],
+                    [[last_info[3], last_info[4]]],
+                    [[last_info[5], last_info[6]]],
+                    [[last_info[7], last_info[8]]],
+                ],
+                dtype=int,
+            )
+            depth = self.get_current_depth(old_quads)  # bug
+            self.uint32data[blockid - 1][10] = depth
+            return
+        elif len(good_list) > 0:
+            if blockid <= 6 and blockid >= 1 and blockid != 4:
+                max_area = np.max(np.array(area_list)[np.array(good_list)]) * 0.80
+                goodarea_tid = [id for id in good_list if area_list[id] > max_area]
+                best_id = -22223
+                lowest = 999999999
+                for tid in goodarea_tid:
+                    height = (
+                        quads_list[tid][0][0][1]
+                        + quads_list[tid][1][0][1]
+                        + quads_list[tid][2][0][1]
+                        + quads_list[tid][3][0][1]
+                    ) / 4.0
+                    if height <= lowest:
+                        best_id = tid
+                        lowest = height
+            elif blockid == 4:
+                choose_left = False
+                max_area = np.max(np.array(area_list)[np.array(good_list)]) * 0.50
+                goodarea_tid = [id for id in good_list if area_list[id] > max_area]
+                lowest_height = np.min(
+                    [
+                        (
+                            quads_list[tid][0][0][1]
+                            + quads_list[tid][1][0][1]
+                            + quads_list[tid][2][0][1]
+                            + quads_list[tid][3][0][1]
+                        )
+                        / 4.0
+                        for tid in goodarea_tid
+                    ]
+                )
+                goodarea_tid2 = [
+                    id
+                    for id in goodarea_tid
+                    if (
+                        quads_list[id][0][0][1]
+                        + quads_list[id][1][0][1]
+                        + quads_list[id][2][0][1]
+                        + quads_list[id][3][0][1]
+                    )
+                    / 4.0
+                    < (lowest_height + 50)
+                ]
+                if len(goodarea_tid2) == 1:
+                    best_id = goodarea_tid2[0]
+                elif len(goodarea_tid2) == 2:
+                    index1 = goodarea_tid2[0]
+                    index2 = goodarea_tid2[1]
+                    if (
+                        quads_list[index1][0][0][0]
+                        + quads_list[index1][1][0][0]
+                        + quads_list[index1][2][0][0]
+                        + quads_list[index1][3][0][0]
+                    ) < (
+                        quads_list[index2][0][0][0]
+                        + quads_list[index2][1][0][0]
+                        + quads_list[index2][2][0][0]
+                        + quads_list[index2][3][0][0]
+                    ):
+                        best_id = index1 if choose_left else index2
+                    else:
+                        best_id = index2 if choose_left else index1
+                else:
+                    rospy.logerr("length is !" + str(len(goodarea_tid2)))
+                    best_id = goodarea_tid2[0]
+            elif blockid <= 9 and blockid >= 7:
+                best_id = -22223
+                best_max_area = 0
+                for id in good_list:
+                    if id_list[id] != blockid:
+                        continue
+                    if minareas_list[id] > best_max_area:
+                        best_id = id
+                        best_max_area = minareas_list[id]
+            else:
+                assert False
         try:
             quads = quads_list[best_id]
         except:
