@@ -8,7 +8,7 @@ import rospy
 import onnxruntime
 import numpy as np
 
-onnx_model_path = os.path.join(os.path.dirname(__file__), "model/CNN_v5.onnx")
+onnx_model_path = os.path.join(os.path.dirname(__file__), "model/CNN_v6.onnx")
 # 创建ONNX Runtime会话
 session = onnxruntime.InferenceSession(onnx_model_path)
 
@@ -59,9 +59,9 @@ def preprocessing_exchange(frame):
         np.logical_and(
             np.logical_and(
                 np.logical_or(hsvImg[:, :, 0] <= 10, hsvImg[:, :, 0] >= 150),
-                hsvImg[:, :, 1] >= 60,
+                hsvImg[:, :, 1] >= 30,
             ),
-            hsvImg[:, :, 2] >= 75,
+            hsvImg[:, :, 2] >= 70,
         )
         * 255
     ).astype(np.uint8)
@@ -133,8 +133,8 @@ def square_detection(frame, grayImg, camera_matrix, area_filter_size=30, height_
         area = cv2.contourArea(contour)
         if area < 100.0:
             continue
-        if area < 200:
-            approx = cv2.approxPolyDP(contour, 4, True)
+        if area < 1500:
+            approx = cv2.approxPolyDP(contour, 8, True)
         else:
             approx = cv2.approxPolyDP(contour, 8, True)
 

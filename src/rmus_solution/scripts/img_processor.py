@@ -215,6 +215,7 @@ class Processor:
                 area_filter_size=1200,
                 verbose=self.verbose,
                 height_range=(0.00, 0.06),
+                exchange_station=True
             )
         
         elif blockid == 11:
