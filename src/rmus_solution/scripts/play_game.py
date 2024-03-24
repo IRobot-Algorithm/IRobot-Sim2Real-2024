@@ -320,8 +320,8 @@ def get_block_pos_in_map(block_id):
 def RunEverywhere():#在地图里到处跑
     img_switch_mode(11)
     while True:
-        target = [11,12,13,21,22,23,31,32,9,5,7]
-        num = random.randint(0, 10)
+        target = [11,12,13,21,22,23,31,32,9,5,7,99]
+        num = random.randint(0, 11)
         go_to(target[num])
 if __name__ == '__main__':
     init_this_node()
@@ -348,9 +348,10 @@ if __name__ == '__main__':
     temporary_storage_num = 0#此变量用于记录暂存点的矿石数量
 
     go_to(9)
-
-    gameinfo = rospy.wait_for_message("/get_gameinfo", UInt8MultiArray, timeout=7)
-
+    try:
+        gameinfo = rospy.wait_for_message("/get_gameinfo", UInt8MultiArray, timeout=7)
+    except:
+        RunEverywhere()
     blocks = [block(0,0), block(0,0), block(0,0), block(0,0), block(0,0), block(0,0), block(0,0)]
     print(gameinfo.data)
     my_robot = robot()
