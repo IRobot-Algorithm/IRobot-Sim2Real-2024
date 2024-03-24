@@ -68,7 +68,7 @@ class manipulater:
             ]
         )
         angle = sciR.from_quat(quat).as_euler("YXZ")[0]
-        print("target_pos:", pos, "target_angle:", angle)
+        #print("target_pos:", pos, "target_angle:", angle)
         return pos, angle
 
     def sendBaseVel(self, vel):
@@ -142,7 +142,12 @@ class manipulater:
             y_threshold = 0.01
             x_dis_tar = 0.360
             angle_threshold = 0.1
-
+            
+            # 初始化pid参数,kp,ki,kd根据实际在小车速度控制部分设置
+            error = [0.0, 0.0 , 0.0]
+            prev_error = [0.0, 0.0 , 0.0]  # 数组依次为linear_x, linear_y, angle.z
+            toral_error = [0.0 , 0.0, 0.0]
+              
             while not rospy.is_shutdown():
                 target_marker_pose = self.current_marker_poses
                 if target_marker_pose is None:
@@ -153,18 +158,40 @@ class manipulater:
                 )
                 # 追踪停车位置，按照0.5的减速比减速x速度
                 cmd_vel = [0.0, 0.0, 0.0]                
-                cmd_vel[0]= 0.25*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))
-                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.15) # liner.x超速限制在[0.1,0.5]
-                cmd_vel[1] = 10*target_pos[1]  # liner.y
-                cmd_vel[1] = np.clip(cmd_vel[1], -0.1, 0.1) # 超速限制在速度范围内
+                cmd_vel[0]= 0.4*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))
+                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.3) # liner.x超速限制在[0.1,0.3]
+                cmd_vel[1] = 8*target_pos[1] # linear.y
+                cmd_vel[1] = np.clip(cmd_vel[1], -0.2, 0.2) # 超速限制在速度范围内
                 cmd_vel[2] = -4*target_angle  # angle.z
                 cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
                 #cmd_vel[2]= 4 * atan2(target_pos[1],target_pos[0]) # 方向角角速度控制
-                print("target.liner.x = ",cmd_vel[0],  "  yaw angle.z speed = ", cmd_vel[2])
-                               
+                #print("target.liner.x=",cmd_vel[0], " target.liner.y=",cmd_vel[1], " yaw angle.z speed=", cmd_vel[2])
+                
+                # 小车加持pid的积分和微分控制
+                #cmd_vel = [0.0, 0.0, 0.0]
+                ## linear_x
+                #error[0] = target_pos[0]          
+                #cmd_vel[0]= 0.4*error[0] + 0.00*toral_error[0] + 5*(error[0] - prev_error[0])
+                #toral_error[0] += error[0]
+                #prev_error[0] = error[0]
+                #cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.3) # liner.x超速限制在[0.1,0.3]
+                ## linear_y
+                #error[1] = target_pos[1] 
+                #cmd_vel[1] = 8*error[1] + 0.00*toral_error[1] + 15*(error[1] - prev_error[1])
+                #toral_error[1] += error[1]
+                #prev_error[1] = error[1]
+                #cmd_vel[1] = np.clip(cmd_vel[1], -0.2, 0.2) # 超速限制在速度范围内
+                ## angle_z
+                #error[2] = target_angle
+                #cmd_vel[2] = -(2*error[2] + 0.00*toral_error[2] + 5*(error[2] - prev_error[2])) # angle.z
+                #toral_error[2] += error[2]
+                #prev_error[2] = error[2]
+                #cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
+                #print("target.liner.x=",cmd_vel[0], " target.liner.y=",cmd_vel[1], " yaw angle.z speed=", cmd_vel[2])
+
                 # 如果距离太近，后退小车
                 if (target_pos[0] - x_dis_tar) < -x_threshold:
-                    cmd_vel = [-0.1, 0.0, 0.0]
+                    cmd_vel[0] = -0.1
                 elif np.abs(target_pos[0] - x_dis_tar) <= x_threshold and (
                     np.abs(target_pos[1]) <= y_threshold
                     and np.abs(target_angle) <= angle_threshold
@@ -173,16 +200,17 @@ class manipulater:
                 self.sendBaseVel(cmd_vel)
                 if np.abs(target_pos[0] - x_dis_tar) <= x_threshold and (
                     np.abs(target_pos[1]) <= y_threshold
+                    and np.abs(target_angle) <= angle_threshold
                 ):
                     pose = Pose()
                     pose.position.x = 0.19
-                    pose.position.y = -0.08
+                    pose.position.y = -0.07
+                    self.arm_position_pub.publish(pose)
+                    rospy.sleep(1.5)
                     self.sendBaseVel([0.25, 0.0, 0.0])
                     rospy.sleep(0.3)
                     self.sendBaseVel([0.0, 0.0, 0.0])
-                    rospy.sleep(1.0)
-                    self.arm_position_pub.publish(pose)
-                    rospy.sleep(1.0)
+                    rospy.sleep(0.5)
                     rospy.loginfo("Place: reach the goal for grasping.")
                     break
 
@@ -324,7 +352,7 @@ class manipulater:
                 cmd_vel[2] = -4*target_angle  # angle.z
                 cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
                 #cmd_vel[2]= 4 * atan2(target_pos[1],target_pos[0]) # 方向角角速度控制
-                print("target.liner.x = ",cmd_vel[0],  "  yaw angle.z speed = ", cmd_vel[2])
+                #print("target.liner.x = ",cmd_vel[0],  "  yaw angle.z speed = ", cmd_vel[2])
                                
                 # 如果距离太近，后退小车
                 if (target_pos[0] - x_dis_tar) < -x_threshold:
@@ -400,13 +428,13 @@ class manipulater:
 
                 cmd_vel = [0.0, 0.0, 0.0] 
                 # 追踪停车位置，按照0.5的减速比减速x速度               
-                cmd_vel[0] = 0.25*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
-                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.15) # 超速限制在速度范围内
+                cmd_vel[0] = 0.4*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
+                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.2) # 超速限制在速度范围内
                 cmd_vel[1] = 10*target_pos[1]  # liner.y
                 cmd_vel[1] = np.clip(cmd_vel[1], -0.15, 0.15) # 超速限制在速度范围内
                 cmd_vel[2] = -4*target_angle  # angle.z
                 cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
-                print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
+                #print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
                 
                 # 如果距离太近，后退小车
                 if target_pos[0]-x_dis_tar < -x_threshold:
@@ -458,7 +486,7 @@ class manipulater:
             
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.385
+            x_dis_tar = 0.369
             angle_threshold = 0.1
             
             while not rospy.is_shutdown():
@@ -472,13 +500,13 @@ class manipulater:
 
                 cmd_vel = [0.0, 0.0, 0.0]                
                 # 追踪停车位置，按照0.5的减速比减速x速度               
-                cmd_vel[0] = 0.25*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
-                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.15) # 超速限制在速度范围内
+                cmd_vel[0] = 0.4*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
+                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.2) # 超速限制在速度范围内
                 cmd_vel[1] = 10*target_pos[1]  # liner.y
                 cmd_vel[1] = np.clip(cmd_vel[1], -0.15, 0.15) # 超速限制在速度范围内
                 cmd_vel[2] = -4*target_angle  # angle.z
                 cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
-                print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
+                #print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
                 
                 # 如果距离太近，后退小车
                 if target_pos[0]-x_dis_tar < -x_threshold:
@@ -511,7 +539,7 @@ class manipulater:
                 self.current_marker_poses
             )
             self.sendBaseVel([0.0, 0.0, 0.0])
-            rospy.sleep(1.0)
+            rospy.sleep(2.0)
             self.open_gripper()
             rospy.sleep(1.0)
             reset_thread = threading.Thread(target=self.reset_arm)
@@ -532,7 +560,7 @@ class manipulater:
             
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.385
+            x_dis_tar = 0.368
             angle_threshold = 0.1
             
             while not rospy.is_shutdown():
@@ -546,13 +574,13 @@ class manipulater:
 
                 cmd_vel = [0.0, 0.0, 0.0]                
                 # 追踪停车位置，按照0.5的减速比减速x速度               
-                cmd_vel[0] = 0.25*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
-                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.15) # 超速限制在速度范围内
+                cmd_vel[0] = 0.4*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
+                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.2) # 超速限制在速度范围内
                 cmd_vel[1] = 10*target_pos[1]  # liner.y
                 cmd_vel[1] = np.clip(cmd_vel[1], -0.15, 0.15) # 超速限制在速度范围内
                 cmd_vel[2] = -4*target_angle  # angle.z
                 cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
-                print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
+                #print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
                 
                 # 如果距离太近，后退小车
                 if target_pos[0]-x_dis_tar < -x_threshold:
@@ -585,7 +613,7 @@ class manipulater:
                 self.current_marker_poses
             )
             self.sendBaseVel([0.0, 0.0, 0.0])
-            rospy.sleep(1.0)
+            rospy.sleep(2.0)
             self.open_gripper()
             rospy.sleep(1.0)
             reset_thread = threading.Thread(target=self.reset_arm)
@@ -606,7 +634,7 @@ class manipulater:
             
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.385
+            x_dis_tar = 0.367
             angle_threshold = 0.1
             
             while not rospy.is_shutdown():
@@ -620,13 +648,13 @@ class manipulater:
 
                 cmd_vel = [0.0, 0.0, 0.0]                
                 # 追踪停车位置，按照0.5的减速比减速x速度               
-                cmd_vel[0] = 0.25*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
-                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.15) # 超速限制在速度范围内
+                cmd_vel[0] = 0.4*sqrt(pow(target_pos[0],2)+pow(target_pos[1],2))  # liner.x
+                cmd_vel[0] = np.clip(cmd_vel[0], 0.1, 0.2) # 超速限制在速度范围内
                 cmd_vel[1] = 10*target_pos[1]  # liner.y
                 cmd_vel[1] = np.clip(cmd_vel[1], -0.15, 0.15) # 超速限制在速度范围内
                 cmd_vel[2] = -4*target_angle  # angle.z
                 cmd_vel[2] = np.clip(cmd_vel[2], -0.3, 0.3) # 超速限制在速度范围内
-                print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
+                #print("liner.x=",cmd_vel[0]," liner.y=",cmd_vel[1]," angle.z=",cmd_vel[2])
                 
                 # 如果距离太近，后退小车
                 if target_pos[0]-x_dis_tar < -x_threshold:
@@ -659,7 +687,7 @@ class manipulater:
                 self.current_marker_poses
             )
             self.sendBaseVel([0.0, 0.0, 0.0])
-            rospy.sleep(1.0)
+            rospy.sleep(2.0)
             self.open_gripper()
             rospy.sleep(1.0)
             reset_thread = threading.Thread(target=self.reset_arm)
@@ -704,29 +732,29 @@ class manipulater:
     def pre(self):
         rospy.loginfo("<manipulater>: now prepare to grip")
         pose = Pose()
-        pose.position.x = 0.21
-        pose.position.y = -0.038
+        pose.position.x = 0.206
+        pose.position.y = -0.039
         self.arm_position_pub.publish(pose)
         
     def pre2(self):
         rospy.loginfo("<manipulater>: level 2 place")
         pose = Pose()
-        pose.position.x = 0.21
+        pose.position.x = 0.19
         pose.position.y = 0.012
         self.arm_position_pub.publish(pose)
         
     def pre3(self):
         rospy.loginfo("<manipulater>: level 3 place")
         pose = Pose()
-        pose.position.x = 0.21
-        pose.position.y = 0.062
+        pose.position.x = 0.19
+        pose.position.y = 0.065
         self.arm_position_pub.publish(pose)
     
     def pre4(self):
         rospy.loginfo("<manipulater>: level 4 place")
         pose = Pose()
-        pose.position.x = 0.21
-        pose.position.y = 0.114
+        pose.position.x = 0.19
+        pose.position.y = 0.115
         self.arm_position_pub.publish(pose)
 
 
