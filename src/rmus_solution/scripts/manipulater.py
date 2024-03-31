@@ -410,7 +410,7 @@ class manipulater:
         elif req.mode == 2:
             rospy.loginfo("level 1 preparing ...")
             
-            self.pre()
+            # self.pre()
 
             x_threshold = 0.01
             y_threshold = 0.01
@@ -438,7 +438,7 @@ class manipulater:
                 
                 # 如果距离太近，后退小车
                 if target_pos[0]-x_dis_tar < -x_threshold:
-                    cmd_vel = [-0.1,0,0]
+                    cmd_vel[0] = -0.1
                 elif (np.abs(target_pos[0]-x_dis_tar) <= x_threshold
                         and np.abs(target_pos[1]) <= y_threshold
                         and np.abs(target_angle) <= angle_threshold
@@ -466,6 +466,8 @@ class manipulater:
             )
             self.sendBaseVel([0.0, 0.0, 0.0])
             rospy.sleep(1.0)
+            self.pre()
+            rospy.sleep(2.5)
             self.open_gripper()
             rospy.sleep(1.0)
             reset_thread = threading.Thread(target=self.reset_arm)
@@ -510,7 +512,7 @@ class manipulater:
                 
                 # 如果距离太近，后退小车
                 if target_pos[0]-x_dis_tar < -x_threshold:
-                    cmd_vel = [-0.1,0,0]
+                    cmd_vel[0] = -0.1
                 elif (np.abs(target_pos[0]-x_dis_tar) <= x_threshold
                         and np.abs(target_pos[1]) <= y_threshold
                         and np.abs(target_angle) <= angle_threshold
@@ -584,7 +586,7 @@ class manipulater:
                 
                 # 如果距离太近，后退小车
                 if target_pos[0]-x_dis_tar < -x_threshold:
-                    cmd_vel = [-0.1,0,0]
+                    cmd_vel[0] = -0.1
                 elif (np.abs(target_pos[0]-x_dis_tar) <= x_threshold
                         and np.abs(target_pos[1]) <= y_threshold
                         and np.abs(target_angle) <= angle_threshold
@@ -658,7 +660,7 @@ class manipulater:
                 
                 # 如果距离太近，后退小车
                 if target_pos[0]-x_dis_tar < -x_threshold:
-                    cmd_vel = [-0.1,0,0]
+                    cmd_vel[0] = -0.1
                 elif (np.abs(target_pos[0]-x_dis_tar) <= x_threshold
                         and np.abs(target_pos[1]) <= y_threshold
                         and np.abs(target_angle) <= angle_threshold
@@ -754,7 +756,7 @@ class manipulater:
         rospy.loginfo("<manipulater>: level 4 place")
         pose = Pose()
         pose.position.x = 0.19
-        pose.position.y = 0.115
+        pose.position.y = 0.116
         self.arm_position_pub.publish(pose)
 
 

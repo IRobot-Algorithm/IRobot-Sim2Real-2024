@@ -211,11 +211,12 @@ class Processor:
             ) = marker_detection(
                 self.image,
                 camera_matrix=self.camera_matrix,
-                template_ids=[7, 8, 9],
+                #template_ids=[7, 8, 9],
+                template_ids=[blockid],
                 area_filter_size=1200,
                 verbose=self.verbose,
                 height_range=(0.00, 0.06),
-                exchange_station=True
+                #exchange_station=True
             )
         
         elif blockid == 11:
@@ -350,6 +351,6 @@ class Processor:
 
 if __name__ == "__main__":
     rospy.init_node("image_node", anonymous=True)
-    rter = Processor(initial_mode=0, verbose=False)
+    rter = Processor(initial_mode=0, verbose=True)
     rospy.loginfo("Image thread started")
     rospy.spin()
