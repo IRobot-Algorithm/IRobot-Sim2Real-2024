@@ -179,6 +179,7 @@ def put():
         img_switch_mode(7)
         rospy.sleep(0.5)
         trimer(4,"")
+        blocks[my_robot.block].is_set = 1
 
     elif blocks[my_robot.block].mode == 4:
         go_to(6)
@@ -186,21 +187,38 @@ def put():
         img_switch_mode(7)
         rospy.sleep(0.5)
         trimer(5,"")
+        blocks[my_robot.block].is_set = 1
 
     else:
         put_on_floor()
 
 def put_on_floor():
+    #global temporary_storage_num
+    #temporary_storage_num += 1
+
+    #print("前往矿石暂存点",temporary_storage_num)
+    #go_to(40+temporary_storage_num)#41 42 43为相应坐标点
+    #trimer(20,"")#让张天晓给我写一个无脑放置
+    #blocks[my_robot.block].is_put = 1
+    #blocks[my_robot.block].mode = 1 + temporary_storage_num
+    #temporary_storage_info[temporary_storage_num] = my_robot.block
+
     global temporary_storage_num
-    temporary_storage_num += 1
-
-    print("前往矿石暂存点",temporary_storage_num)
-    go_to(40+temporary_storage_num)#41 42 43为相应坐标点
-    trimer(20,"")#让张天晓给我写一个无脑放置
-    blocks[my_robot.block].is_put = 1
-    blocks[my_robot.block].mode = 1 + temporary_storage_num
-    temporary_storage_info[temporary_storage_num] = my_robot.block
-
+    temporary_storage_num -= 1  # 倒序先拿的后放
+    
+    if rest_block>0:
+        print("前往矿石暂存点",temporary_storage_num)
+        go_to(40+temporary_storage_num)#41 42 43为相应坐标点
+        trimer(20,"")#让张天晓给我写一个无脑放置
+        blocks[my_robot.block].is_put = 1
+        blocks[my_robot.block].mode = 1 + temporary_storage_num 
+        temporary_storage_info[temporary_storage_num] = my_robot.block
+    else:
+        print("最后一颗矿石，直接去兑换站")
+        blocks[my_robot.block].is_put = 0   # 不放置到临时兑换点
+        blocks[my_robot.block].mode = 1 + temporary_storage_num  # 放置到2层
+        put()  # 放置到2层，mode=2
+        
 def update_block_location(area, block_place_information):#更新矿石的位置信息
     for i in range(1,7):
         if i in block_place_information and blocks[i].is_set == 0:
@@ -345,8 +363,8 @@ if __name__ == '__main__':
 
     my_robot = robot()
 
-    temporary_storage_num = 0#此变量用于记录暂存点的矿石数量
-
+    #temporary_storage_num = 0#此变量用于记录暂存点的矿石数量
+    temporary_storage_num = 4 # 暂存区可存放矿石数  
     go_to(9)
     try:
         gameinfo = rospy.wait_for_message("/get_gameinfo", UInt8MultiArray, timeout=7)
@@ -382,14 +400,25 @@ if __name__ == '__main__':
             detect_area(3)
     game_rest_time = rospy.Time.now().to_sec()-game_begin_time
     print("目前耗时:", game_rest_time,"秒")
-    for i in range(1,4):
-        while True:
-            go_to(50+i)
-            img_switch_mode(temporary_storage_info[i])
-            if grip_specified_block(temporary_storage_info[i]):
-                break
-        put()
+    #for i in range(1,4):
+    #    while True:
+    #        go_to(50+i)
+    #        img_switch_mode(temporary_storage_info[i])
+    #        if grip_specified_block(temporary_storage_info[i]):
+    #            break
+    #    put()
 
+    for i in range(1,4):
+        if temporary_storage_info[i] == 0:
+            pass
+        else:
+            while True:
+                go_to(50+i)
+                img_switch_mode(temporary_storage_info[i])
+                if grip_specified_block(temporary_storage_info[i]):
+                    break
+            put()
+            
     navigation_result = go_to(5)
 
     game_total_time = rospy.Time.now().to_sec()-game_begin_time
