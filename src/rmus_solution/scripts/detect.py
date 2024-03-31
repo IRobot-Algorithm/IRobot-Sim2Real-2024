@@ -8,7 +8,7 @@ import rospy
 import onnxruntime
 import numpy as np
 
-onnx_model_path = os.path.join(os.path.dirname(__file__), "model/CNN_v6.onnx")
+onnx_model_path = os.path.join(os.path.dirname(__file__), "model/CNN_v7.onnx")
 # 创建ONNX Runtime会话
 session = onnxruntime.InferenceSession(onnx_model_path)
 
@@ -53,19 +53,28 @@ def sort_contour(cnt):
     return new_cnt
 
 
+def preprocessing_box(frame):
+    lower_red = np.array([0, 0, 150])
+    upper_red = np.array([100, 100, 250])
+    hsvImg = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    # 创建一个掩膜，根据红色的RGB范围将图像中的红色部分提取出来
+    mask = cv2.inRange(frame, lower_red, upper_red)
+    # boolImg = (np.logical_and(np.logical_and(np.logical_or(hsvImg[:,:,0] <= 10, hsvImg[:,:,0] >= 150), hsvImg[:,:,1] >= 100), hsvImg[:,:,2] >= 100) * 255).astype(np.uint8)
+    return mask, hsvImg
+
 def preprocessing_exchange(frame):
     hsvImg = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     boolImg = (
         np.logical_and(
             np.logical_and(
                 np.logical_or(hsvImg[:, :, 0] <= 10, hsvImg[:, :, 0] >= 150),
-                hsvImg[:, :, 1] >= 30,
+                hsvImg[:, :, 1] >= 60,
             ),
-            hsvImg[:, :, 2] >= 70,
+            hsvImg[:, :, 2] >= 50,
         )
         * 255
     ).astype(np.uint8)
-    # boolImg = (np.logical_and(np.logical_and(np.logical_or(hsvImg[:,:,0] <= 10, hsvImg[:,:,0] >= 150), hsvImg[:,:,1] >= 100), hsvImg[:,:,2] >= 100) * 255).astype(np.uint8)
+    boolImg = (np.logical_and(np.logical_and(np.logical_or(hsvImg[:,:,0] <= 10, hsvImg[:,:,0] >= 150), hsvImg[:,:,1] >= 100), hsvImg[:,:,2] >= 100) * 255).astype(np.uint8)
     return boolImg, hsvImg
 
 
@@ -256,16 +265,16 @@ def marker_detection(
     seg_papram=None,
     verbose=True,
     height_range=(-10000.0, 200000.0),
-    exchange_station=False,
+    exchange_station=0,
 ):
     all_ID = [] # 检测到的所有ID
     minareas_list = [] # 面积列表
-    if exchange_station:
-        tframe = copy.deepcopy(frame)
-        tframe[int(tframe.shape[0] * 0.32) :, :, :] = 0
-        boolImg, _ = preprocessing_exchange(tframe)
-    else:
+    if exchange_station == 0:  # 1-6号预处理
         boolImg, _ = preprocessing(frame)
+    elif exchange_station == 1: # 7-9号预处理
+        boolImg, _ = preprocessing_box(frame)
+    elif exchange_station == 2:
+        boolImg, _ = preprocessing_exchange(frame) # 初始点位预处理
     quads, tvec_list, rvec_list, area_list, all_ID, quads_ID, minareas_list = square_detection(
         frame, boolImg, camera_matrix, area_filter_size=area_filter_size, height_range=height_range, template_ids=template_ids
     )
