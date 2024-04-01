@@ -154,7 +154,7 @@ class Processor:
     def get_gameinfo(self, image):
         gameinfo = [0, 0, 0]
         id_list, quads_list, area_list, tvec_list, rvec_list, _, _ = marker_detection(
-            image, camera_matrix=self.camera_matrix, area_filter_size=150, verbose=self.verbose, exchange_station=True
+            image, camera_matrix=self.camera_matrix, area_filter_size=150, verbose=self.verbose, exchange_station=2
         )
         number_dict = {}
         for id, quads in zip(id_list, quads_list):
@@ -198,6 +198,7 @@ class Processor:
                 area_filter_size=1200,
                 verbose=self.verbose,
                 height_range=(0.0, 0.06),
+                exchange_station=0
             )
         elif blockid <= 9 and blockid >= 7:
             (
@@ -216,7 +217,7 @@ class Processor:
                 area_filter_size=1200,
                 verbose=self.verbose,
                 height_range=(0.00, 0.06),
-                #exchange_station=True
+                exchange_station=1
             )
         
         elif blockid == 11:
