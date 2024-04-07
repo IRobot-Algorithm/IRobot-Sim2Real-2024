@@ -414,7 +414,7 @@ class manipulater:
 
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.385
+            x_dis_tar = 0.395
             angle_threshold = 0.1
 
             while not rospy.is_shutdown():
@@ -488,7 +488,7 @@ class manipulater:
             
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.369
+            x_dis_tar = 0.379
             angle_threshold = 0.1
             
             while not rospy.is_shutdown():
@@ -562,7 +562,7 @@ class manipulater:
             
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.368
+            x_dis_tar = 0.378
             angle_threshold = 0.1
             
             while not rospy.is_shutdown():
@@ -636,7 +636,7 @@ class manipulater:
             
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.367
+            x_dis_tar = 0.377
             angle_threshold = 0.1
             
             while not rospy.is_shutdown():
