@@ -146,6 +146,16 @@ void RotateRecovery::initialize(std::string name, tf2_ros::Buffer*,
     pose.pose.position.y = -0.45738840;
     clear_poses.push_back(pose);
 
+    pose.pose.position.x = 0.184659;
+    pose.pose.position.y = 0.4815458;
+    clear_poses.push_back(pose);
+    pose.pose.position.x = 0.2556463;
+    pose.pose.position.y = 1.15818715;
+    clear_poses.push_back(pose);
+    pose.pose.position.x = 2.2106778;
+    pose.pose.position.y = 0.37473;
+    clear_poses.push_back(pose);
+
     for (const auto& poseStamped : clear_poses)
     {
         pcl::PointXYZ point;

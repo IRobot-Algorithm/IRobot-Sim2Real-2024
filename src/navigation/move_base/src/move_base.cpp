@@ -41,9 +41,9 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
-
+#include <tf2/utils.h>
 #include <geometry_msgs/Twist.h>
-
+#include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace move_base {
@@ -849,7 +849,10 @@ namespace move_base {
     as_->publishFeedback(feedback);
 
     //check to see if we've moved far enough to reset our oscillation timeout
-    if(distance(current_position, oscillation_pose_) >= oscillation_distance_)
+    double diff_yaw = fabs(tf2::getYaw(current_position.pose.orientation) - tf2::getYaw(oscillation_pose_.pose.orientation));
+    if (diff_yaw > M_2_PI)
+      diff_yaw -= M_2_PI;
+    if(distance(current_position, oscillation_pose_) >= oscillation_distance_ || diff_yaw >= 0.3)
     {
       last_oscillation_reset_ = ros::Time::now();
       oscillation_pose_ = current_position;
