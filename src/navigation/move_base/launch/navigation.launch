@@ -1,6 +1,6 @@
 <launch>
   <!-- Arguments -->
-  <arg name="obs_map_file" default="$(find move_base)/maps/cartographer/obs_map.yaml"/>
+  <arg name="obs_map_file" default="$(find move_base)/maps/cartographer/clear_map.yaml"/>
   <arg name="open_rviz" default="false"/>
 
   <!-- scan -->

@@ -930,11 +930,11 @@ namespace move_base {
           runPlanner_ = false;
           lock.unlock();
 
-          if (first_reach_)
-          {
-            if (resetMap(clear_map_file_))
-              first_reach_ = false;
-          }
+          // if (first_reach_)
+          // {
+          //   if (resetMap(clear_map_file_))
+          //     first_reach_ = false;
+          // }
           as_->setSucceeded(move_base_msgs::MoveBaseResult(), "Goal reached.");
           return true;
         }
