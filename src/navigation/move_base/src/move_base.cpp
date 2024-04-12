@@ -41,9 +41,9 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
-
+#include <tf2/utils.h>
 #include <geometry_msgs/Twist.h>
-
+#include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace move_base {
@@ -849,7 +849,10 @@ namespace move_base {
     as_->publishFeedback(feedback);
 
     //check to see if we've moved far enough to reset our oscillation timeout
-    if(distance(current_position, oscillation_pose_) >= oscillation_distance_)
+    double diff_yaw = fabs(tf2::getYaw(current_position.pose.orientation) - tf2::getYaw(oscillation_pose_.pose.orientation));
+    if (diff_yaw > M_2_PI)
+      diff_yaw -= M_2_PI;
+    if(distance(current_position, oscillation_pose_) >= oscillation_distance_ || diff_yaw >= 0.3)
     {
       last_oscillation_reset_ = ros::Time::now();
       oscillation_pose_ = current_position;
@@ -927,11 +930,11 @@ namespace move_base {
           runPlanner_ = false;
           lock.unlock();
 
-          if (first_reach_)
-          {
-            if (resetMap(clear_map_file_))
-              first_reach_ = false;
-          }
+          // if (first_reach_)
+          // {
+          //   if (resetMap(clear_map_file_))
+          //     first_reach_ = false;
+          // }
           as_->setSucceeded(move_base_msgs::MoveBaseResult(), "Goal reached.");
           return true;
         }
@@ -1157,11 +1160,11 @@ namespace move_base {
 
       //next, we'll load a recovery behavior to rotate in place
       boost::shared_ptr<nav_core::RecoveryBehavior> rotate(recovery_loader_.createInstance("rotate_recovery/RotateRecovery"));
-      if(clearing_rotation_allowed_){
+      // if(clearing_rotation_allowed_){
         rotate->initialize("rotate_recovery", &tf_, planner_costmap_ros_, controller_costmap_ros_);
         recovery_behavior_names_.push_back("rotate_recovery");
         recovery_behaviors_.push_back(rotate);
-      }
+      // }
 
       //next, we'll load a recovery behavior that will do an aggressive reset of the costmap
       boost::shared_ptr<nav_core::RecoveryBehavior> ags_clear(recovery_loader_.createInstance("clear_costmap_recovery/ClearCostmapRecovery"));
@@ -1170,10 +1173,10 @@ namespace move_base {
       recovery_behaviors_.push_back(ags_clear);
 
       //we'll rotate in-place one more time
-      if(clearing_rotation_allowed_){
+      // if(clearing_rotation_allowed_){
         recovery_behaviors_.push_back(rotate);
         recovery_behavior_names_.push_back("rotate_recovery");
-      }
+      // }
     }
     catch(pluginlib::PluginlibException& ex){
       ROS_FATAL("Failed to load a plugin. This should not happen on default recovery behaviors. Error: %s", ex.what());
