@@ -7,11 +7,14 @@ from rmus_solution.srv import switch, setgoal, graspsignal
 from geometry_msgs.msg import Pose
 
 from std_msgs.msg import Bool
+from std_msgs.msg import Int8
+
 
 import tf2_ros
 import tf2_geometry_msgs
 
 import random
+
 
 
 timeout = False
@@ -184,10 +187,6 @@ def put():
     elif blocks[my_robot.block].mode == 4:
         go_to(6)
         rospy.loginfo("到达兑换站B")#输出到达了兑换站 
-        img_switch_mode(7)
-        rospy.sleep(0.5)
-        trimer(5,"")
-        blocks[my_robot.block].is_set = 1
 
     else:
         put_on_floor()
@@ -265,11 +264,16 @@ def detect_area(area):#对指定矿区进行一次抓取、放置的全过程。
     location = area*10 + 1
     go_to(location)
     img_switch_mode(11)#此模式，便于识别ID以加入到集合里 
+
+    target_block = rospy.wait_for_message("/dst_ID", Int8, timeout=7)#得到距离车最近的方块的ID
+    print("target_block.data:",target_block.data)
     add_area_information(area)
-    result = grip()
+    result = grip(target_block.data)
     if result == False and (my_robot.location == 11 or my_robot.location == 21 or my_robot.location == 31):
         go_to_another_side(my_robot.location)
-        if grip():
+        img_switch_mode(11)#此模式，便于得到距离车最近的方块的ID
+        target_block = rospy.wait_for_message("/dst_ID", Int8, timeout=7)#得到距离车最近的方块的ID
+        if grip(target_block.data):
             put()
             return True
 
@@ -387,6 +391,7 @@ if __name__ == '__main__':
     temporary_storage_info = [0, 0, 0, 0]#储存暂存区的方块ID
 
     is_here = 0#判断这里有没有目标方块
+
     while rest_block > 0:
         if rest_block == 6 and rospy.Time.now().to_sec()-game_begin_time > 100:
             RunEverywhere()
@@ -418,7 +423,7 @@ if __name__ == '__main__':
                 if grip_specified_block(temporary_storage_info[i]):
                     break
             put()
-            
+    
     navigation_result = go_to(5)
 
     game_total_time = rospy.Time.now().to_sec()-game_begin_time
