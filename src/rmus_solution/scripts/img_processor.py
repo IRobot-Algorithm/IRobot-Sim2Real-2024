@@ -6,6 +6,7 @@ from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
 from std_msgs.msg import UInt8MultiArray
+from std_msgs.msg import Int8
 from sensor_msgs.msg import Image, CameraInfo
 from rmus_solution.srv import switch, switchResponse
 
@@ -40,6 +41,7 @@ class Processor:
         self.bridge = CvBridge()
         self.current_visualization_image = None
         self.all_detectd_ID = []
+        self.dst_ID = 0
         while not rospy.is_shutdown():
             try:
                 rospy.wait_for_message("/camera/color/image_raw", Image, timeout=5.0)
@@ -81,6 +83,7 @@ class Processor:
         self.pub_p = rospy.Publisher("/get_gameinfo", UInt8MultiArray, queue_size=1)
         self.pub_b = rospy.Publisher("/get_blockinfo", Pose, queue_size=1)
         self.pub_all_ID = rospy.Publisher("/all_detect_ID", UInt8MultiArray, queue_size=1)
+        self.pub_dst_ID = rospy.Publisher("/dst_ID", Int8, queue_size=1)
         self.detected_gameinfo = [-1, -1, -1]
         self.uint32data = [None] * 9
         
@@ -119,7 +122,8 @@ class Processor:
                 self.pub_b.publish(self.latest_pose)
                 # self.latest_pose.position = None
                 # self.latest_pose.orientation = None
-            print("self.all_detectd_ID = " +str(self.all_detectd_ID))
+            if self.all_detectd_ID != []:
+                print("self.all_detectd_ID = " +str(self.all_detectd_ID))
             self.pub_all_ID.publish(UInt8MultiArray(data=self.all_detectd_ID))
             #print("publish pose once used: ", int((rospy.Time.now().to_nsec() - t_begin)/1e6), "ms")
         elif locked_current_mode == 0:
@@ -135,8 +139,8 @@ class Processor:
                 # self.latest_pose.position = None
                 # self.latest_pose.orientation = None
             
-            
-            print("self.all_detectd_ID = " +str(self.all_detectd_ID))
+            if self.all_detectd_ID != []:
+                print("self.all_detectd_ID = " +str(self.all_detectd_ID))
             self.pub_all_ID.publish(UInt8MultiArray(data=self.all_detectd_ID))
         else:
             assert False
@@ -221,6 +225,7 @@ class Processor:
             )
         
         elif blockid == 11:
+            self.dst_ID = 0
             (
                 id_list,
                 quads_list,
@@ -238,6 +243,19 @@ class Processor:
                 height_range=(0.00, 0.06),
             )
             self.all_detectd_ID = list(set(all_ID))
+            if id_list != [] and tvec_list != []:
+                try:
+                    # 计算每个平移向量的范数
+                    norms = [np.linalg.norm(tvec) for tvec in tvec_list]
+                    self.dst_ID = id_list[np.argmin(norms)]
+                    print("Nearest ID is------>", self.dst_ID)
+                    self.pub_dst_ID.publish(self.dst_ID)
+                except:
+                    print(id_list)
+                    print(tvec_list)
+            else:
+                self.dst_ID = -1
+                self.pub_dst_ID.publish(self.dst_ID)
             return
 
         self.all_detectd_ID = list(set(all_ID))
