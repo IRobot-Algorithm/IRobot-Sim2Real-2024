@@ -370,6 +370,6 @@ class Processor:
 
 if __name__ == "__main__":
     rospy.init_node("image_node", anonymous=True)
-    rter = Processor(initial_mode=0, verbose=True)
+    rter = Processor(initial_mode=0, verbose=False)
     rospy.loginfo("Image thread started")
     rospy.spin()
