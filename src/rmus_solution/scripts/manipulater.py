@@ -414,7 +414,8 @@ class manipulater:
 
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.395
+            #x_dis_tar = 0.395
+            x_dis_tar = 0.290
             angle_threshold = 0.1
 
             while not rospy.is_shutdown():
@@ -449,11 +450,11 @@ class manipulater:
                 if np.abs(target_pos[0]-x_dis_tar) <= x_threshold and (
                     np.abs(target_pos[1]) <= y_threshold
                 ):
-                    rospy.loginfo("Trim well in the all dimention, going open loop")
-                    self.sendBaseVel([0.25, 0.0, 0.0])
-                    rospy.sleep(0.3)
-                    self.sendBaseVel([0.25, 0.0, 0.0])
-                    rospy.sleep(0.3)
+                    #rospy.loginfo("Trim well in the all dimention, going open loop")
+                    #self.sendBaseVel([0.25, 0.0, 0.0])
+                    #rospy.sleep(0.3)
+                    #self.sendBaseVel([0.25, 0.0, 0.0])
+                    #rospy.sleep(0.3)
                     self.sendBaseVel([0.0, 0.0, 0.0])
                     rospy.loginfo("Place: reach the goal for placing.")
                     break
@@ -465,7 +466,7 @@ class manipulater:
                 self.current_marker_poses
             )
             self.sendBaseVel([0.0, 0.0, 0.0])
-            rospy.sleep(1.0)
+            rospy.sleep(2.0)
             self.pre()
             rospy.sleep(2.5)
             self.open_gripper()
@@ -488,7 +489,8 @@ class manipulater:
             
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.379
+            #x_dis_tar = 0.379
+            x_dis_tar = 0.274
             angle_threshold = 0.1
             
             while not rospy.is_shutdown():
@@ -523,13 +525,13 @@ class manipulater:
                 if np.abs(target_pos[0] - x_dis_tar) <= x_threshold and (
                     np.abs(target_pos[1]) <= y_threshold
                 ):
-                    rospy.loginfo("Trim well in the all dimention, going open loop")
-                    self.sendBaseVel([0.0, 0.0, 0.0])
-                    rospy.sleep(1.0)
-                    self.sendBaseVel([0.25, 0.0, 0.0])
-                    rospy.sleep(0.3)
-                    self.sendBaseVel([0.25, 0.0, 0.0])
-                    rospy.sleep(0.3)
+                    #rospy.loginfo("Trim well in the all dimention, going open loop")
+                    #self.sendBaseVel([0.0, 0.0, 0.0])
+                    #rospy.sleep(1.0)
+                    #self.sendBaseVel([0.25, 0.0, 0.0])
+                    #rospy.sleep(0.3)
+                    #self.sendBaseVel([0.25, 0.0, 0.0])
+                    #rospy.sleep(0.3)
                     self.sendBaseVel([0.0, 0.0, 0.0])
                     rospy.loginfo("Place: reach the goal for placing.")
                     break
@@ -562,7 +564,8 @@ class manipulater:
             
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.378
+            #x_dis_tar = 0.378
+            x_dis_tar = 0.273
             angle_threshold = 0.1
             
             while not rospy.is_shutdown():
@@ -597,13 +600,13 @@ class manipulater:
                 if np.abs(target_pos[0] - x_dis_tar) <= x_threshold and (
                     np.abs(target_pos[1]) <= y_threshold
                 ):
-                    rospy.loginfo("Trim well in the all dimention, going open loop")
-                    self.sendBaseVel([0.0, 0.0, 0.0])
-                    rospy.sleep(1.0)
-                    self.sendBaseVel([0.25, 0.0, 0.0])
-                    rospy.sleep(0.3)
-                    self.sendBaseVel([0.25, 0.0, 0.0])
-                    rospy.sleep(0.3)
+                    #rospy.loginfo("Trim well in the all dimention, going open loop")
+                    #self.sendBaseVel([0.0, 0.0, 0.0])
+                    #rospy.sleep(1.0)
+                    #self.sendBaseVel([0.25, 0.0, 0.0])
+                    #rospy.sleep(0.3)
+                    #self.sendBaseVel([0.25, 0.0, 0.0])
+                    #rospy.sleep(0.3)
                     self.sendBaseVel([0.0, 0.0, 0.0])
                     rospy.loginfo("Place: reach the goal for placing.")
                     break
@@ -636,7 +639,8 @@ class manipulater:
             
             x_threshold = 0.01
             y_threshold = 0.01
-            x_dis_tar = 0.377
+            #x_dis_tar = 0.377
+            x_dis_tar = 0.272
             angle_threshold = 0.1
             
             while not rospy.is_shutdown():
@@ -671,13 +675,13 @@ class manipulater:
                 if np.abs(target_pos[0] - x_dis_tar) <= x_threshold and (
                     np.abs(target_pos[1]) <= y_threshold
                 ):
-                    rospy.loginfo("Trim well in the all dimention, going open loop")
-                    self.sendBaseVel([0.0, 0.0, 0.0])
-                    rospy.sleep(1.0)
-                    self.sendBaseVel([0.25, 0.0, 0.0])
-                    rospy.sleep(0.3)
-                    self.sendBaseVel([0.25, 0.0, 0.0])
-                    rospy.sleep(0.3)
+                    #rospy.loginfo("Trim well in the all dimention, going open loop")
+                    #self.sendBaseVel([0.0, 0.0, 0.0])
+                    #rospy.sleep(1.0)
+                    #self.sendBaseVel([0.25, 0.0, 0.0])
+                    #rospy.sleep(0.3)
+                    #self.sendBaseVel([0.25, 0.0, 0.0])
+                    #rospy.sleep(0.3)
                     self.sendBaseVel([0.0, 0.0, 0.0])
                     rospy.loginfo("Place: reach the goal for placing.")
                     break
